@@ -542,6 +542,17 @@ header .hbell+.uchip,header .hbell+.ib{display:inline-flex}
 .k-prep .kbtn{background:#2f9e6f;color:#fff}.kwait{margin-top:10px;text-align:center;color:#7fdca0;font-weight:700}.kemp{color:#7d6f66;text-align:center;padding:30px 0}
 @media (max-width:900px){.kcols{grid-template-columns:1fr}.kcol{min-height:0}.kclock{font-size:24px}}
 @media (max-width:560px){.cday{min-height:52px}.cday b{font-size:16px}.cusr .cdl{display:none}.cusr .cn{min-width:44px}}
+
+/* Customer photos + QR */
+.phm{flex-direction:column;align-items:stretch}.phts{display:flex;gap:10px;flex-wrap:wrap}.pht{position:relative}.pht img{width:84px;height:84px}
+.phx{position:absolute;top:-8px;left:-8px;width:26px;height:26px;border-radius:50%;border:0;background:#d64545;color:#fff;font-size:13px;cursor:pointer;padding:0}
+.phbtn{display:flex;gap:8px;flex-wrap:wrap}.phbtn .ib{flex:1;min-width:150px;justify-content:center}
+#qrm{position:fixed;inset:0;z-index:120;background:rgba(20,14,12,.6);display:grid;place-items:center;padding:16px}#qrm[hidden]{display:none}
+.qrb{background:var(--card);color:var(--ink);border-radius:22px;padding:20px 22px;max-width:380px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35)}.qrb h3{margin:0 0 10px}
+.qrc{display:inline-block;background:#fff;padding:8px;border-radius:14px;border:1px solid var(--line)}.qrc svg{display:block;width:250px;height:250px;max-width:70vw;max-height:70vw}
+.qrs{text-align:start;margin:12px 0 6px;padding-inline-start:20px;line-height:1.8;font-size:14px}.qrw{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:10px;border-radius:12px;background:color-mix(in srgb,var(--ac) 10%,transparent);font-size:14px}
+.spin.sm{width:16px;height:16px;border-width:2px;margin:0;display:inline-block}
+.phw{position:relative;display:inline-flex;flex:none}.phn{position:absolute;bottom:-6px;left:-6px;min-width:22px;height:22px;border-radius:999px;background:var(--ac);color:var(--acink);font:700 12px/22px var(--ff,inherit);font-style:normal;text-align:center;box-shadow:0 0 0 2px var(--card)}
 </style>
 </head>
 <body>
@@ -833,7 +844,7 @@ return'<div class="pds" id="pds"><div class="pdw"><div class="pdimg"><img src="'
 (S.addons.length?'<h4>الإضافات <small>اختياري</small></h4><div class="ads">'+S.addons.map(function(a){var c=+PD.ad[a.id]||0;
 if(a.cnt)return'<div class="adr cntr'+(c?' on':'')+'"><span class="nm">'+esc(a.n)+'<small>'+(+a.p?fmt(a.p)+' '+cur()+' للواحدة':'مجاناً')+'</small></span><div class="stp"><button data-a="adm" data-id="'+a.id+'" aria-label="أقل"'+(c?'':' disabled')+'>−</button><em>'+c+'</em><button data-a="adpl" data-id="'+a.id+'" aria-label="أكثر">+</button></div>'+(c&&+a.p?'<b>'+fmt(a.p*c)+'</b>':'')+'</div>';
 return'<button class="adr'+(c?' on':'')+'" data-a="pad" data-id="'+a.id+'"><span class="ck"></span><span class="nm">'+esc(a.n)+(a.ph?' <small>📷</small>':'')+'</span><b>'+(+a.p?'+ '+fmt(a.p)+' '+cur():'مجاناً')+'</b></button>'}).join('')+'</div>':'')+
-'<h4>صورة للكيك <small>اختياري: للطباعة على الكيك أو كتصميم مطلوب</small></h4><div class="phb">'+(PD.photo?'<img src="'+PD.photo+'" alt="" data-a="phview"><span class="nm">تم إرفاق الصورة ✓</span><button class="dng" data-a="phdel">إزالة</button>':'<span class="nm mut">ماكو صورة مرفقة</span><button class="ib" data-a="phpick">'+ico(I.cam,16)+' ارفع صورة</button>')+'<input type="file" id="phf" accept="image/*" hidden></div>'+
+'<h4>صور للكيك <small>اختياري: لحد 3 صور، للطباعة على الكيك أو كتصميم مطلوب</small></h4>'+phSec()+
 '<div><label for="ptxt">الكتابة على الكيك</label><input type="text" id="ptxt" maxlength="60" value="'+esc(PD.txt)+'" placeholder="مثلاً: عيد ميلاد سعيد يا سارة"></div>'+
 '<div><label for="pnote">ملاحظات</label><textarea id="pnote" rows="2" placeholder="لون معيّن، تعديل على التصميم...">'+esc(PD.note)+'</textarea></div>'+
 '</div></div></div>'+bar('احجز الآن','pbook')}
@@ -852,11 +863,11 @@ if(!PD.name.trim())return toast('اكتب اسم الزبون');
 if(PD.phone.replace(/\D/g,'').length<10)return toast('رقم الهاتف غير صحيح');
 if(!PD.date)return toast('اختار يوم الاستلام');
 var A=pAdds(),s=L[PD.size]||{};
-var o={id:uid(),no:S.seq,at:Date.now(),iid:it.id,cat:S.cats[PD.c].name,item:it.cap||'',size:s.n||'',sp:+s.p||0,qty:PD.qty,adds:A.map(function(a){var r={n:a.n,p:+a.p||0};if(a.cnt)r.c=a.c;return r}),fill:pFill(),txt:PD.txt.trim(),note:PD.note.trim(),name:PD.name.trim(),phone:PD.phone.trim(),due:PD.date+'T'+(PD.time||'12:00'),dep:+PD.dep||0,total:pTotal(),st:'new',ph:!!PD.photo,by:curU?curU.n:''};
-var fin=function(){S.seq++;S.orders.unshift(o);if(!save()){S.orders.shift();S.seq--;return toast('ما گدر يحفظ الطلب، الذاكرة ممتلئة')}if(o.ph&&CL.uid){CL.dirty['ophotos/'+o.id]='photo';clSave();setTimeout(clFlush,800)}PD.step='rc';PD.order=o;drawPD(true);if(prnCfg().auto)setTimeout(function(){printO(o)},500)};
+var o={id:uid(),no:S.seq,at:Date.now(),iid:it.id,cat:S.cats[PD.c].name,item:it.cap||'',size:s.n||'',sp:+s.p||0,qty:PD.qty,adds:A.map(function(a){var r={n:a.n,p:+a.p||0};if(a.cnt)r.c=a.c;return r}),fill:pFill(),txt:PD.txt.trim(),note:PD.note.trim(),name:PD.name.trim(),phone:PD.phone.trim(),due:PD.date+'T'+(PD.time||'12:00'),dep:+PD.dep||0,total:pTotal(),st:'new',ph:!!PD.photo,phn:phL().length,by:curU?curU.n:''};
+var fin=function(){S.seq++;S.orders.unshift(o);if(!save()){S.orders.shift();S.seq--;return toast('ما گدر يحفظ الطلب، الذاكرة ممتلئة')}if(o.ph&&CL.uid){CL.dirty['ophotos/'+o.id]='photo';for(var pi=1;pi<(+o.phn||1);pi++)CL.dirty['ophotos/'+o.id+'_'+pi]='photo';clSave();setTimeout(clFlush,800)}PD.step='rc';PD.order=o;drawPD(true);if(prnCfg().auto)setTimeout(function(){printO(o)},500)};
 var bc=$('[data-a=bconf]');if(bc){bc.disabled=true;bc.textContent='جاري الحجز...'}
 (CL.uid&&CL.ready&&CL.online?nextSeq().catch(function(){return 0}):Promise.resolve(0)).then(function(n){if(n>0){o.no=n;if(n>=S.seq)S.seq=n}else{o.no=S.seq;if(CL.uid)o.offNo=true}
-if(PD.photo)phPut('o_'+o.id,PD.photo).then(function(ok){if(!ok)o.photo=PD.photo;fin()});else fin()})}
+var ex=phL().slice(1);if(PD.photo)phPut('o_'+o.id,PD.photo).then(function(ok){if(!ok)o.photo=PD.photo;return Promise.all(ex.map(function(x,i){return phPut('o_'+o.id+'_'+(i+1),x)}))}).then(function(r){if(r&&r.some(function(x){return!x}))o.morePh=ex;fin()});else fin()})}
 
 /* ---- Receipt ---- */
 var RCSS='.rcp{background:#fff;color:#1a1a1a;width:100%;max-width:360px;padding:16px 14px;font-size:14px;line-height:1.55;direction:rtl;text-align:right}.rch{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}.rch img{width:62px;height:62px;object-fit:contain}.rch b{font-size:20px}.rch small{color:#555}.rcn{text-align:center;margin:8px 0;padding:6px;border:1.5px dashed #888;border-radius:8px;font-size:15px}.rr{display:flex;justify-content:space-between;gap:10px;padding:2px 0}.rr>span:last-child{text-align:left;max-width:62%}.rr.big{font-weight:800;font-size:16px}.rr small{color:#555}.rcs{border-top:1.5px dashed #999;margin:8px 0}.rcd{text-align:center}.rcd b{font-size:16px}.rcf{text-align:center;margin-top:10px;color:#444;font-size:13px}';
@@ -867,7 +878,7 @@ return'<div class="rcp"><div class="rch"><img src="'+lg()+'" alt=""><b>'+SHOP+'<
 row('التاريخ',fD(new Date(o.at)))+row('الزبون',esc(o.name))+row('الهاتف','<span dir="ltr">'+esc(o.phone)+'</span>')+'<div class="rcs"></div>'+
 row('<b>'+esc(o.item)+'</b>'+(o.size?'<br><small>'+esc(o.size)+'</small>':''),o.sp?fmt(o.sp)+' × '+o.qty:'× '+o.qty)+
 (o.fill?row('حشوة '+esc(o.fill.n),o.fill.p?fmt(o.fill.p*o.qty):'—'):'')+A.map(function(a){return row('+ '+esc(a.n)+(a.c?' × '+a.c:''),a.p?fmt(aLine(a,o)):'مجاناً')}).join('')+
-(o.txt?row('الكتابة','«'+esc(o.txt)+'»'):'')+(o.ph||o.photo?row('صورة','مرفقة 📷'):'')+(o.note?row('ملاحظات',esc(o.note)):'')+
+(o.txt?row('الكتابة','«'+esc(o.txt)+'»'):'')+(o.ph||o.photo?row('صورة',(+o.phn>1?o.phn+' صور ':'')+'مرفقة 📷'):'')+(o.note?row('ملاحظات',esc(o.note)):'')+
 '<div class="rcs"></div>'+row('المجموع',esc(money(o.total)),'big')+row('العربون',esc(money(o.dep)))+(o.coll!=null?row('المستلم عند التسليم',esc(money(o.coll)))+(o.disc?row('خصم',esc(money(o.disc))):'')+row(o.debt?'دين باقي':'الباقي',o.debt?esc(money(o.debt)):'تم الاستحصال ✓','big'):row('الباقي',esc(money(rem)),'big'))+
 '<div class="rcs"></div><div class="rcd">موعد الاستلام<br><b>'+fD(d)+' · <span style="white-space:nowrap">'+fT(d)+'</span></b></div><div class="rcf">'+esc(S.rcNote||'شكراً لاختياركم 🌾')+'</div></div>'}
 (function(){var st=document.createElement('style');st.textContent=RCSS;document.head.appendChild(st)})();
@@ -954,7 +965,7 @@ if(PD){if(t.id==='ptxt')PD.txt=t.value;else if(t.id==='pnote')PD.note=t.value;el
 else if(t.id==='bdep'){PD.dep=t.value;var tt=pTotal(),d=+t.value||0;$('#tdep').textContent=money(d);$('#trem').textContent=money(Math.max(0,tt-d))}}
 if(t.id==='osq'){oQ=t.value;$('#olist').innerHTML=olistHTML();loadPh()}});
 document.addEventListener('change',function(e){var t=e.target,a=t.dataset.a;
-if(t.id==='phf'&&PD&&t.files[0])shrink(t.files[0],1400).then(function(s){PD.photo=s;drawPD()});
+if(t.id==='phf'&&PD&&t.files[0]){phAddFiles(t.files);t.value=''}
 else if(a==='adn'){S.addons[+t.dataset.i].n=t.value.trim();save()}else if(a==='adp'){S.addons[+t.dataset.i].p=+t.value||0;save()}else if(a==='adph'){S.addons[+t.dataset.i].ph=t.checked?1:0;save()}
 else if(t.id==='rcn'){S.rcNote=t.value.trim();save()}
 else if(a==='adcnt'){S.addons[+t.dataset.i].cnt=t.checked?1:0;save()}else if(a==='fn'){S.fills[+t.dataset.i].n=t.value.trim();save()}else if(a==='fp'){S.fills[+t.dataset.i].p=+t.value||0;save()}});
@@ -1085,7 +1096,7 @@ document.addEventListener('change',function(e){var t=e.target;if(t.id==='covf'&&
 if(t.id==='rfrom'){rFrom=t.value;render()}else if(t.id==='rto'){rTo=t.value;render()}});
 
 /* ===== Backup ===== */
-function bkCollect(){var keys=S.orders.filter(function(o){return o.ph&&!o.photo}).map(function(o){return'o_'+o.id});var photos={};
+function bkCollect(){var keys=[];S.orders.forEach(function(o){if(o.ph&&!o.photo){keys.push('o_'+o.id);for(var i=1;i<(+o.phn||1);i++)keys.push('o_'+o.id+'_'+i)}});var photos={};
 return Promise.all(keys.map(function(k){return phGet(k).then(function(v){if(v)photos[k]=v})})).then(function(){return JSON.stringify({app:'sanabel',v:1,at:Date.now(),by:curU?curU.n:'',data:S,photos:photos})})}
 function bkName(){var d=new Date();return'sanabel-backup-'+dkey(d)+'-'+pad(d.getHours())+pad(d.getMinutes())+'.json'}
 function bkSave(share){toast('جاري تجهيز النسخة...');S.lastBackup=Date.now();save();
@@ -1191,7 +1202,7 @@ var css='@page{size:'+z.media+';margin:'+(forShot?'0':'6mm')+'}'+(forShot?'':'.p
 '.it{text-align:left}.it h1{font-size:'+z.fs*1.7+'px;line-height:1.2}.it .no{font-size:'+z.fs*1.15+'px;font-weight:800;direction:ltr}.it small{display:block;color:#666;font-size:'+z.fs*.86+'px}'+
 '.meta{display:grid;grid-template-columns:1fr 1fr;gap:12px}.bx{padding:10px 12px}.bx h4{font-size:'+z.fs*.86+'px;color:#777;margin-bottom:4px;font-weight:700}.bx p{display:flex;justify-content:space-between;gap:8px}.bx p b{font-weight:800}'+
 'table{width:100%;border-collapse:collapse}th,td{padding:'+z.fs*.55+'px '+z.fs*.6+'px;text-align:right;vertical-align:middle}th{font-size:'+z.fs*.86+'px}td.n,th.n{text-align:left;white-space:nowrap}td.c,th.c{text-align:center}.th{width:'+z.fs*3+'px;height:'+z.fs*3+'px;object-fit:cover;border-radius:6px;float:left;margin-right:8px}'+
-'.bt{display:grid;grid-template-columns:1.2fr 1fr;gap:14px;align-items:start}.nt{display:flex;flex-direction:column;gap:8px}.nt .bx p{display:block}.cph{max-width:100%;max-height:'+z.fs*11+'px;object-fit:contain;border-radius:8px;display:block;margin-top:6px}'+
+'.bt{display:grid;grid-template-columns:1.2fr 1fr;gap:14px;align-items:start}.nt{display:flex;flex-direction:column;gap:8px}.nt .bx p{display:block}.cph{max-width:100%;max-height:'+z.fs*11+'px;object-fit:contain;border-radius:8px;display:block;margin-top:6px}.cphs{display:flex;gap:6px;flex-wrap:wrap}.cphs .cph{max-width:calc(50% - 3px);max-height:'+z.fs*8+'px}.cphs .cph:only-child{max-width:100%;max-height:'+z.fs*11+'px}'+
 '.tt div{display:flex;justify-content:space-between;padding:6px 12px}.tt .gr{font-weight:800;font-size:'+z.fs*1.25+'px}.due{text-align:center;padding:10px;font-size:'+z.fs*1.05+'px}.due b{font-size:'+z.fs*1.25+'px}'+
 '.ft{margin-top:auto;display:flex;flex-direction:column;gap:12px}.terms{font-size:'+z.fs*.86+'px;color:#555}.sig{display:flex;justify-content:space-between;gap:30px;margin-top:'+z.fs*1.6+'px}.sig span{flex:1;border-top:1px solid #333;padding-top:4px;text-align:center;font-size:'+z.fs*.86+'px;color:#555}.thx{text-align:center;color:#666;font-size:'+z.fs*.9+'px}';
 if(tpl==='modern')css+='.ih{background:'+ac+';color:#fff;border-radius:16px;padding:'+z.fs*1.3+'px}.br img{background:#fff;border-radius:50%;padding:4px}.br small,.it small{color:rgba(255,255,255,.85)}.bx{background:#f5f5f7;border-radius:12px}'+
@@ -1208,7 +1219,7 @@ return'<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><met
 '<div class="bx"><h4>الطلب</h4><p><span>الحالة</span><b>'+(STL[o.st]||'')+'</b></p><p><span>سجّله</span><b>'+esc(o.by||'—')+'</b></p></div></section>'+
 '<table><thead><tr><th>الصنف</th><th>الحجم</th><th class="c">الكمية</th><th class="n">السعر</th><th class="n">المجموع</th></tr></thead><tbody>'+rows.map(function(r){return'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td class="c">'+r[2]+'</td><td class="n">'+r[3]+'</td><td class="n">'+r[4]+'</td></tr>'}).join('')+'</tbody></table>'+
 '<section class="bt"><div class="nt">'+(o.txt?'<div class="bx"><h4>الكتابة على الكيك</h4><p>«'+esc(o.txt)+'»</p></div>':'')+(o.note?'<div class="bx"><h4>ملاحظات</h4><p>'+esc(o.note)+'</p></div>':'')+
-(c.cimg&&photo?'<div class="bx"><h4>الصورة المرفقة من الزبون</h4><img class="cph" src="'+photo+'" alt=""></div>':(o.ph||o.photo)?'<div class="bx"><h4>صورة الزبون</h4><p>مرفقة 📷</p></div>':'')+'</div>'+
+(c.cimg&&photo?'<div class="bx"><h4>'+([].concat(photo).length>1?'الصور المرفقة من الزبون':'الصورة المرفقة من الزبون')+'</h4><div class="cphs">'+[].concat(photo).map(function(x){return'<img class="cph" src="'+x+'" alt="">'}).join('')+'</div></div>':(o.ph||o.photo)?'<div class="bx"><h4>صورة الزبون</h4><p>مرفقة 📷</p></div>':'')+'</div>'+
 '<div class="nt"><div class="tt"><div><span>المجموع</span><b>'+esc(money(o.total))+'</b></div><div><span>العربون المدفوع</span><b>'+esc(money(o.dep))+'</b></div>'+(o.coll!=null?'<div><span>المستلم عند التسليم</span><b>'+esc(money(o.coll))+'</b></div>'+(o.disc?'<div><span>خصم</span><b>'+esc(money(o.disc))+'</b></div>':'')+'<div class="gr"><span>'+(o.debt?'دين باقي':'الحساب')+'</span><span>'+(o.debt?esc(money(o.debt)):'مدفوع بالكامل ✓')+'</span></div>':'<div class="gr"><span>المتبقي</span><span>'+esc(money(rem))+'</span></div>')+'</div>'+
 '<div class="due">موعد الاستلام<br><b>'+fD(d)+' · <span style="white-space:nowrap">'+fT(d)+'</span></b></div></div></section>'+
 '<footer class="ft">'+(c.terms?'<div class="terms"><b>الشروط:</b> '+esc(c.terms)+'</div>':'')+'<div class="sig"><span>توقيع الزبون</span><span>ختم وتوقيع المحل</span></div><div class="thx">'+esc(S.rcNote||'شكراً لاختياركم 🌾')+'</div></footer>'+
@@ -1330,7 +1341,7 @@ function nextSeq(){return dinc('meta/counter',['seq']).then(function(r){return r
 /* Building documents from the app data */
 var CFG_KEYS=['slogan','cur','ac','bg','font','rad','lh','ratio','fit','view','auto','sec','orderOn','addons','fills','fillReq','prn','rcNote','logo','lockMin'];
 function cfgObj(){var o={};CFG_KEYS.forEach(function(k){if(S[k]!==undefined&&S[k]!==null)o[k]=S[k]});return o}
-function ordObj(o){var x={};for(var k in o)if(k!=='photo'&&k!=='upd'&&k!=='id'&&o[k]!==undefined)x[k]=o[k];return x}
+function ordObj(o){var x={};for(var k in o)if(k!=='photo'&&k!=='morePh'&&k!=='upd'&&k!=='id'&&o[k]!==undefined)x[k]=o[k];return x}
 function docsFromS(){var D={'config/main':cfgObj()};
 S.cats.forEach(function(c,i){D['cats/'+c.id]={name:c.name,o:i,cover:c.cover||''};c.imgs.forEach(function(m,j){D['items/'+m.id]={cat:c.id,o:j,cap:m.cap||'',desc:m.desc||'',sizes:m.sizes||[],src:m.src||''}})});
 S.orders.forEach(function(o){D['orders/'+o.id]=ordObj(o)});return D}
@@ -1714,6 +1725,101 @@ h=h.replace('<span id="clst">',bellBtn()+'<span id="clst">');
 h=h.replace('<div class="sb-foot">','<div class="sb-foot"><button class="sbi" data-a="kitgo">'+ico(I.kit,19)+'<span>شاشة المطبخ</span></button>');
 return h};
 var _acct=acct;acct=function(c){var a=_acct.apply(this,arguments);return curU?'<span class="hacc">'+bellBtn()+a+'</span>':a};
+
+/* A small QR code generator (byte mode, error level M, versions 1-15) */
+var QR=(function(){
+var ECC=[-1,10,16,26,18,24,16,18,22,22,26,30,22,22,24,24],NB=[-1,1,1,1,2,2,4,4,4,5,5,5,8,9,9,10];
+function raw(v){var r=(16*v+128)*v+64;if(v>=2){var n=Math.floor(v/7)+2;r-=(25*n-10)*n-55;if(v>=7)r-=36}return r}
+function dataCW(v){return Math.floor(raw(v)/8)-ECC[v]*NB[v]}
+function mul(x,y){var z=0;for(var i=7;i>=0;i--){z=(z<<1)^((z>>>7)*0x11D);z^=((y>>>i)&1)*x}return z}
+function div(d){var r=[];for(var i=0;i<d;i++)r.push(0);r[d-1]=1;var root=1;for(i=0;i<d;i++){for(var j=0;j<r.length;j++){r[j]=mul(r[j],root);if(j+1<r.length)r[j]^=r[j+1]}root=mul(root,2)}return r}
+function rem(data,dv){var r=dv.map(function(){return 0});data.forEach(function(b){var f=b^r.shift();r.push(0);dv.forEach(function(c,i){r[i]^=mul(c,f)})});return r}
+function utf8(s){var b=[],e=unescape(encodeURIComponent(s));for(var i=0;i<e.length;i++)b.push(e.charCodeAt(i));return b}
+function make(text){var bytes=utf8(text),v,bits=[];
+for(v=1;v<=15;v++){var cc=v<=9?8:16;if(4+cc+bytes.length*8<=dataCW(v)*8)break}if(v>15)throw new Error('long');
+function put(val,n){for(var i=n-1;i>=0;i--)bits.push((val>>>i)&1)}
+put(4,4);put(bytes.length,v<=9?8:16);bytes.forEach(function(b){put(b,8)});var cap=dataCW(v)*8;put(0,Math.min(4,cap-bits.length));put(0,(8-bits.length%8)%8);
+for(var pb=0xEC;bits.length<cap;pb^=0xEC^0x11)put(pb,8);
+var data=[];for(var i=0;i<bits.length;i+=8){var x=0;for(var j=0;j<8;j++)x=(x<<1)|bits[i+j];data.push(x)}
+var nb=NB[v],el=ECC[v],rc=Math.floor(raw(v)/8),ns=nb-rc%nb,sl=Math.floor(rc/nb),dv=div(el),blocks=[],k=0;
+for(i=0;i<nb;i++){var dat=data.slice(k,k+sl-el+(i<ns?0:1));k+=dat.length;var ec=rem(dat,dv);if(i<ns)dat.push(0);blocks.push(dat.concat(ec))}
+var all=[];for(i=0;i<blocks[0].length;i++)for(j=0;j<blocks.length;j++)if(i!==sl-el||j>=ns)all.push(blocks[j][i]);
+var size=v*4+17,M=[],F=[];for(i=0;i<size;i++){M.push([]);F.push([]);for(j=0;j<size;j++){M[i].push(false);F[i].push(false)}}
+function set(x,y,d){M[y][x]=d;F[y][x]=true}
+for(i=0;i<size;i++){set(6,i,i%2===0);set(i,6,i%2===0)}
+[[3,3],[size-4,3],[3,size-4]].forEach(function(p){for(var dy=-4;dy<=4;dy++)for(var dx=-4;dx<=4;dx++){var d=Math.max(Math.abs(dx),Math.abs(dy)),xx=p[0]+dx,yy=p[1]+dy;if(xx>=0&&xx<size&&yy>=0&&yy<size)set(xx,yy,d!==2&&d!==4)}});
+var al=[];if(v>1){var na=Math.floor(v/7)+2,st=Math.ceil((v*4+4)/(na*2-2))*2;al=[6];for(var pos=size-7;al.length<na;pos-=st)al.splice(1,0,pos)}
+for(i=0;i<al.length;i++)for(j=0;j<al.length;j++){if((i===0&&j===0)||(i===0&&j===al.length-1)||(i===al.length-1&&j===0))continue;for(var dy2=-2;dy2<=2;dy2++)for(var dx2=-2;dx2<=2;dx2++)set(al[i]+dx2,al[j]+dy2,Math.max(Math.abs(dx2),Math.abs(dy2))!==1)}
+function fmt(mask){var d=(0<<3)|mask,r=d;for(var t=0;t<10;t++)r=(r<<1)^((r>>>9)*0x537);var b=((d<<10)|r)^0x5412;function g(n){return((b>>>n)&1)!==0}
+for(var t2=0;t2<=5;t2++)set(8,t2,g(t2));set(8,7,g(6));set(8,8,g(7));set(7,8,g(8));for(t2=9;t2<15;t2++)set(14-t2,8,g(t2));
+for(t2=0;t2<8;t2++)set(size-1-t2,8,g(t2));for(t2=8;t2<15;t2++)set(8,size-15+t2,g(t2));set(8,size-8,true)}
+fmt(0);
+if(v>=7){var r2=v;for(i=0;i<12;i++)r2=(r2<<1)^((r2>>>11)*0x1F25);var vb=(v<<12)|r2;for(i=0;i<18;i++){var bt=((vb>>>i)&1)!==0,a=size-11+i%3,b2=Math.floor(i/3);set(a,b2,bt);set(b2,a,bt)}}
+var bi=0;for(var right=size-1;right>=1;right-=2){if(right===6)right=5;for(var vt=0;vt<size;vt++)for(j=0;j<2;j++){var xx=right-j,up=((right+1)&2)===0,yy=up?size-1-vt:vt;if(!F[yy][xx]&&bi<all.length*8){M[yy][xx]=((all[bi>>>3]>>>(7-(bi&7)))&1)!==0;bi++}}}
+function mask(m){for(var y=0;y<size;y++)for(var x=0;x<size;x++){var inv;switch(m){case 0:inv=(x+y)%2===0;break;case 1:inv=y%2===0;break;case 2:inv=x%3===0;break;case 3:inv=(x+y)%3===0;break;case 4:inv=(Math.floor(x/3)+Math.floor(y/2))%2===0;break;case 5:inv=x*y%2+x*y%3===0;break;case 6:inv=(x*y%2+x*y%3)%2===0;break;default:inv=((x+y)%2+x*y%3)%2===0}if(!F[y][x]&&inv)M[y][x]=!M[y][x]}}
+function pen(){var p=0,dark=0,x,y;for(y=0;y<size;y++){var run=1;for(x=1;x<size;x++){if(M[y][x]===M[y][x-1]){run++;if(run===5)p+=3;else if(run>5)p++}else run=1}}
+for(x=0;x<size;x++){run=1;for(y=1;y<size;y++){if(M[y][x]===M[y-1][x]){run++;if(run===5)p+=3;else if(run>5)p++}else run=1}}
+for(y=0;y<size-1;y++)for(x=0;x<size-1;x++){var c=M[y][x];if(c===M[y][x+1]&&c===M[y+1][x]&&c===M[y+1][x+1])p+=3}
+for(y=0;y<size;y++)for(x=0;x<size;x++)if(M[y][x])dark++;var tot=size*size;p+=Math.floor(Math.abs(dark*20-tot*10)/tot)*10;return p}
+var best=0,bp=1e9;for(var m=0;m<8;m++){mask(m);fmt(m);var pp=pen();if(pp<bp){bp=pp;best=m}mask(m)}mask(best);fmt(best);return M}
+function svg(text,px){var M=make(text),n=M.length,q=4,s=n+q*2,d='';for(var y=0;y<n;y++)for(var x=0;x<n;x++)if(M[y][x])d+='M'+(x+q)+' '+(y+q)+'h1v1h-1z';
+return'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+s+' '+s+'" width="'+(px||240)+'" height="'+(px||240)+'" shape-rendering="crispEdges"><rect width="'+s+'" height="'+s+'" fill="#fff"/><path d="'+d+'" fill="#000"/></svg>'}
+return{make:make,svg:svg}})();
+
+
+/* ===================== Customer photos: up to 3, from the device or via QR from the customer's phone ===================== */
+var PH_MAX=3;
+function phL(){if(!PD)return[];if(!PD.more)PD.more=[];return[PD.photo].concat(PD.more).filter(Boolean)}
+function phSet(L){PD.photo=L[0]||null;PD.more=L.slice(1,PH_MAX)}
+function phSec(){var L=phL(),left=PH_MAX-L.length;
+return'<div class="phb phm">'+(L.length?'<div class="phts">'+L.map(function(s,i){return'<div class="pht"><img src="'+s+'" alt="" data-a="phview" data-i="'+i+'"><button class="phx" data-a="phdel" data-i="'+i+'" aria-label="حذف">✕</button></div>'}).join('')+'</div>':'<span class="nm mut">ماكو صورة مرفقة</span>')+
+(left>0?'<div class="phbtn"><button class="ib" data-a="phpick">'+ico(I.cam,16)+' من الجهاز</button><button class="ib" data-a="phqr">📱 من موبايل الزبون (QR)</button></div>':'<span class="mut">وصلت للحد ('+PH_MAX+' صور)</span>')+
+'<input type="file" id="phf" accept="image/*" multiple hidden></div>'}
+function phAddFiles(files){var L=[].slice.call(files||[]).slice(0,PH_MAX-phL().length);if(!L.length)return;
+Promise.all(L.map(function(f){return shrink(f,1400)})).then(function(a){phSet(phL().concat(a));drawPD()})}
+
+/* Photos of an order: the first + the extras */
+function orderPhotos(o){return orderPhoto(o).then(function(first){var n=+o.phn||0,jobs=[];
+for(var i=1;i<n;i++)(function(i){jobs.push(o.morePh&&o.morePh[i-1]?Promise.resolve(o.morePh[i-1]):phGet('o_'+o.id+'_'+i).then(function(s){return s||cloudPhoto(o.id+'_'+i)}))})(i);
+return Promise.all(jobs).then(function(r){return[first].concat(r).filter(Boolean)})})}
+var _invDoc=invDoc;invDoc=function(o,size,forShot){var c=prnCfg();return Promise.race([orderPhotos(o).catch(function(){return[]}),new Promise(function(r){setTimeout(function(){r([])},6000)})]).then(function(ph){return invHTML(o,size,c.tpl,ph.length>1?ph:ph[0]||null,forShot)})};
+
+/* Order gallery: shows all photos */
+document.addEventListener('click',function(e){var b=e.target.closest('[data-a]');if(!b)return;var a=b.dataset.a;
+if(a==='ophv'){e.stopImmediatePropagation();var o=findO(b.dataset.id);if(!o)return;orderPhotos(o).then(function(L){if(!L.length)return toast('الصورة مو موجودة بهذا الجهاز');lbArr=L.map(function(s,i){return{src:s,cap:'صورة الزبون '+(L.length>1?(i+1)+'/'+L.length+' ':'')+'- #'+o.no}});lbI=0;$('#lb').hidden=false;drawLB()})}
+else if(a==='phview'&&PD){e.stopImmediatePropagation();var L=phL();lbArr=L.map(function(s,i){return{src:s,cap:'صورة الزبون '+(i+1)+'/'+L.length}});lbI=+b.dataset.i||0;$('#lb').hidden=false;drawLB()}
+else if(a==='phdel'&&PD){e.stopImmediatePropagation();var L2=phL();L2.splice(+b.dataset.i||0,1);phSet(L2);drawPD()}
+else if(a==='phqr'&&PD){e.stopImmediatePropagation();qrOpen()}
+else if(a==='qrx'){qrClose(true)}else if(a==='qrnew'){qrClose(true);qrOpen()}},true);
+
+/* The QR window on the tablet */
+var QS=null;
+function upURL(){if(/^https?:/.test(location.protocol)&&!/localhost|127\.0\.0\.1/.test(location.host))return location.origin+location.pathname.replace(/[^\/]*$/,'')+'up.html';return'https://raadaljnabi.github.io/sanabel-panel/up.html'}
+function tok(){var a='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789',r='',u=new Uint32Array(24);(window.crypto||window.msCrypto).getRandomValues(u);for(var i=0;i<24;i++)r+=a[u[i]%a.length];return r}
+function qrOpen(){var left=PH_MAX-phL().length;if(left<=0)return toast('وصلت للحد');if(!CL.uid||!CL.ready)return toast('هذي الميزة تحتاج تسجيل دخول وإنترنت');if(!CL.online)return toast('ماكو إنترنت هسه، ارفع الصورة من الجهاز');
+var k=tok(),exp=Date.now()+10*60000;QS={k:k,exp:exp,busy:false,t:null};
+var m=$('#qrm');if(!m){m=document.createElement('div');m.id='qrm';document.body.appendChild(m)}m.hidden=false;
+m.innerHTML='<div class="qrb"><h3>صورة من موبايل الزبون</h3><p class="mut">جاري تجهيز الكود...</p></div>';
+dset('qr/'+k,{st:'wait',exp:exp,max:left,n:0,at:Date.now(),by:meN()}).then(function(){if(!QS||QS.k!==k)return;var url=upURL()+'?k='+k;
+m.innerHTML='<div class="qrb"><h3>📱 صورة من موبايل الزبون</h3><div class="qrc">'+QR.svg(url,250)+'</div><ol class="qrs"><li>الزبون يفتح <b>الكاميرا</b> بموبايله ويوجّهها على الكود</li><li>يضغط الرابط ويختار '+(left>1?'لحد '+left+' صور':'الصورة')+'</li><li>الصور توصل هنا لوحدها</li></ol>'+
+'<div class="qrw" id="qrw"><span class="spin sm"></span> بانتظار صور الزبون... <b id="qrt"></b></div><div class="row" style="justify-content:center;gap:8px;margin-top:12px"><button class="ib" data-a="qrx">إلغاء</button></div></div>';
+qrTick();QS.t=setInterval(qrTick,2000)}).catch(function(e){qrClose(false);toast(e.status===403?'لازم تحدّث «قواعد الحماية» بـ Firebase حتى تشتغل هذي الميزة':'ما گدر يسوي الكود: '+(e.message||''))})}
+function qrTick(){if(!QS)return;var s=Math.max(0,Math.round((QS.exp-Date.now())/1000)),t=$('#qrt');if(t)t.textContent=Math.floor(s/60)+':'+pad(s%60);
+if(s<=0){clearInterval(QS.t);var w=$('#qrw');if(w)w.innerHTML='<b class="late">انتهت صلاحية الكود</b> <button class="pri sm" data-a="qrnew">كود جديد</button>';return}
+if(QS.busy)return;QS.busy=true;var k=QS.k;
+dget('qr/'+k).then(function(d){var x=fromF(d.fields||{});if(x.st!=='done'){if(QS)QS.busy=false;return}
+var w=$('#qrw');if(w)w.innerHTML='<span class="spin sm"></span> وصلت! جاري التحميل...';var n=Math.min(3,+x.n||1),jobs=[];
+for(var i=0;i<n;i++)jobs.push(dget('qrp/'+k+'_'+i).then(function(p){return fromF(p.fields||{}).d||null}).catch(function(){return null}));
+return Promise.all(jobs).then(function(L){L=L.filter(Boolean);if(!QS||QS.k!==k)return;
+if(PD&&PD.step!=='rc'){phSet(phL().concat(L));drawPD()}
+clearInterval(QS.t);qrClean(k,n);QS=null;var m=$('#qrm');if(m)m.hidden=true;chime();toast(L.length>1?'وصلت '+L.length+' صور ✓':'وصلت الصورة ✓')})}).catch(function(){if(QS)QS.busy=false})}
+function qrClean(k,n){for(var i=0;i<(n||3);i++)ddel('qrp/'+k+'_'+i).catch(function(){});ddel('qr/'+k).catch(function(){})}
+function qrClose(clean){if(QS){clearInterval(QS.t);if(clean)qrClean(QS.k,3);QS=null}var m=$('#qrm');if(m)m.hidden=true}
+
+/* Customer photo badge (+2) on the order card and the kitchen */
+function phBadge(h,o){var n=+o.phn||0;if(n<2)return h;return h.replace(/(<img class="oph" data-ph="[^"]+"[^>]*>)/,'<span class="phw">$1<em class="phn">'+n+'</em></span>')}
+var _ordCard2=ordCard;ordCard=function(o){return phBadge(_ordCard2(o),o)};
+var _kitV=kitV;kitV=function(){var h=_kitV();S.orders.forEach(function(o){if(+o.phn>1&&h.indexOf('data-ph="'+o.id+'"')>=0)h=h.replace(new RegExp('(<img class="oph" data-ph="'+o.id+'"[^>]*>)'),'<span class="phw">$1<em class="phn">'+o.phn+'</em></span>')});return h};
 
 loadSess();if(!curU){v='login';loginTo='home';refreshLoginInfo()}else{setTimeout(function(){clFlush();clPoll();pullStaff().catch(function(){})},1500)}
 
