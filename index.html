@@ -525,7 +525,7 @@ return{pass:'1234',sec:4,view:'list',cats:[bd,mk('أعراس',P.slice().reverse(
 function load(){try{var d=JSON.parse(localStorage.getItem('sanabel'));if(d&&d.cats)return d}catch(e){}return seed()}
 function save(){try{localStorage.setItem('sanabel',JSON.stringify(S));if(typeof CL!=='undefined'&&CL&&!CL.quiet&&window.cloudDirty)cloudDirty();if(window.savedFx)savedFx(true);return true}catch(e){toast('المساحة ممتلئة، احذف بعض الصور');if(window.savedFx)savedFx(false);return false}}
 function hx(t){var x=2166136261;for(var i=0;i<t.length;i++){x^=t.charCodeAt(i)*31+7;x=Math.imul(x,16777619)>>>0}return x.toString(36)}
-var MK='1g4yhop',sup=false;
+var MK='1g4yhop',sup=false,supK='';
 var repK=-1,S=load(),v='home',tab='cats',ci=0,ii=0,timer=null,ac=0,err='';
 
 /* أيقونات */
@@ -1021,7 +1021,7 @@ if(a==='delcov'&&isAdmin()){var cc=S.cats[+b.dataset.i];ask('إزالة صورة
 if(a==='sbtog'){sbOpen=!sbOpen;var ad=$('.adm');if(ad)ad.classList.toggle('sbo',sbOpen);return}
 if(a==='tab'){sbOpen=false}
 if(a==='rp'){rP=b.dataset.v;if(rP==='custom'&&!rFrom){var t=new Date();rTo=dkey(t);t.setDate(1);rFrom=dkey(t)}render()}
-else if(a==='rprint'){var h=repDoc();if(window.Android&&Android.printHtml)Android.printHtml(h);else toast('الطباعة تفتح من داخل التطبيق على الجهاز')}
+else if(a==='rprint'){var h=repDoc();if(window.Android&&Android.printHtml)Android.printHtml(h);else browserPrint(h)}
 else if(a==='rpdf'){if(window.Android&&Android.sharePdf)Android.sharePdf(repDoc(),'',dkey(new Date()).replace(/-/g,''),'تقرير مبيعات '+SHOP+' - '+RP_NAMES[rP]);else toast('PDF يشتغل من داخل التطبيق على الجهاز')}});
 document.addEventListener('change',function(e){var t=e.target;if(t.id==='covf'&&t.files[0]&&S.cats[covI]){var ci2=covI;shrink(t.files[0],900).then(function(src){var old=S.cats[ci2].cover;S.cats[ci2].cover=src;if(save())toast('تم تغيير صورة القسم');else{S.cats[ci2].cover=old}render()});return}
 if(t.id==='rfrom'){rFrom=t.value;render()}else if(t.id==='rto'){rTo=t.value;render()}});
@@ -1109,8 +1109,10 @@ else if(a==='licbk'){licBack=false;v='admin';render()}});
 licCheck().then(function(){licGate()});setInterval(function(){licCheck().then(licGate)},5*60*1000);
 
 /* ===== Print settings and invoice templates ===== */
-function prnCfg(){var d={mode:'dialog',ip:'',port:9100,paper:'a5',tpl:'classic',copies:1,auto:false,img:true,cimg:true,pdf:'inv',pdfSize:'a5',phone:'',addr:'',terms:'العربون غير قابل للاسترجاع بعد بدء التحضير. يرجى الاستلام بالموعد المحدد.'},c=S.prn||{};for(var k in c)d[k]=c[k];return d}
-function setPrn(k,v){S.prn=prnCfg();S.prn[k]=v;save()}
+function prnCfg(){var d={mode:'dialog',ip:'',port:9100,paper:'a5',tpl:'classic',copies:1,auto:false,img:true,cimg:true,pdf:'inv',pdfSize:'a5',phone:'',addr:'',terms:'العربون غير قابل للاسترجاع بعد بدء التحضير. يرجى الاستلام بالموعد المحدد.'},c=S.prn||{};for(var k in c)d[k]=c[k];var L=prnDev();for(var j in L)d[j]=L[j];if(!window.Android)d.mode='dialog';return d}
+var PRN_DEV=['mode','ip','port','copies','auto'];
+function prnDev(){try{return JSON.parse(localStorage.getItem('sanabel_prn')||'{}')}catch(e){return{}}}
+function setPrn(k,v){if(PRN_DEV.indexOf(k)>=0){var L=prnDev();L[k]=v;try{localStorage.setItem('sanabel_prn',JSON.stringify(L))}catch(e){}if(window.savedFx)savedFx(true);return}S.prn=S.prn||{};S.prn[k]=v;save()}
 function docFont(){var f=S.font||'Tajawal';return{link:'<link href="https://fonts.googleapis.com/css2?family='+f+':wght@400;700;800&display=swap" rel="stylesheet">',ff:"'"+f+"',Tahoma,Arial,sans-serif"}}
 var SZ={a4:{w:794,pad:44,fs:14,pt:595,media:'A4'},a5:{w:559,pad:28,fs:12,pt:420,media:'A5'}};
 var TPLN={classic:'كلاسيكي',modern:'عصري',minimal:'بسيط'};
@@ -1125,7 +1127,7 @@ esc?'.rcp{max-width:none;margin:0;padding:4px 2px 10px;font-size:'+(paper==='r58
 /* Invoice (A4 / A5) in three templates */
 function invHTML(o,size,tpl,photo,forShot){var c=prnCfg(),z=SZ[size]||SZ.a5,ac=S.ac||'#d9467a',d=dueD(o),A=o.adds||[],rem=Math.max(0,o.total-o.dep),it=findItem(o);
 var rows=[[esc(o.item)+(c.img&&it?'<img class="th" src="'+it.src+'" alt="">':''),esc(o.size||'—'),o.qty,o.sp?fmt(o.sp):'—',o.sp?fmt(o.sp*o.qty):'—']].concat(o.fill?[['حشوة '+esc(o.fill.n),'حشوة',o.qty,o.fill.p?fmt(o.fill.p):'مجاناً',o.fill.p?fmt(o.fill.p*o.qty):'مجاناً']]:[]).concat(A.map(function(a){return['+ '+esc(a.n),'إضافة',aQty(a,o),a.p?fmt(a.p):'مجاناً',a.p?fmt(aLine(a,o)):'مجاناً']}));
-var css='@page{size:'+z.media+';margin:0}*{box-sizing:border-box;margin:0;padding:0}html,body{background:#fff}body{font-family:'+docFont().ff+';color:#1d1d1f;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+var css='@page{size:'+z.media+';margin:'+(forShot?'0':'6mm')+'}'+(forShot?'':'.pg{max-width:none!important;padding:'+Math.round(z.pad*.55)+'px!important}')+'*{box-sizing:border-box;margin:0;padding:0}html,body{background:#fff}body{font-family:'+docFont().ff+';color:#1d1d1f;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
 '.pg{width:100%;max-width:'+z.w+'px;margin:0 auto;padding:'+z.pad+'px;font-size:'+z.fs+'px;line-height:1.6;display:flex;flex-direction:column;gap:'+Math.round(z.fs*1.2)+'px}'+(forShot?'.pg{min-height:'+Math.round(z.w*1.414)+'px}':'')+
 '.ih{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.br{display:flex;gap:12px;align-items:center}.br img{width:'+z.fs*4.4+'px;height:'+z.fs*4.4+'px;object-fit:contain}.sn{font-size:'+z.fs*1.6+'px;font-weight:800;display:block;line-height:1.25}.br small{display:block;color:#666;font-size:'+z.fs*.86+'px}'+
 '.it{text-align:left}.it h1{font-size:'+z.fs*1.7+'px;line-height:1.2}.it .no{font-size:'+z.fs*1.15+'px;font-weight:800;direction:ltr}.it small{display:block;color:#666;font-size:'+z.fs*.86+'px}'+
@@ -1156,9 +1158,12 @@ return'<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><met
 function orderPhoto(o){if(o.photo)return Promise.resolve(o.photo);if(!o.ph||o.demo)return Promise.resolve(o.demo&&o.demoPh||null);return phGet('o_'+o.id).then(function(s){return s||cloudPhoto(o.id)})}
 function invDoc(o,size,forShot){var c=prnCfg();return orderPhoto(o).then(function(ph){return invHTML(o,size,c.tpl,ph,forShot)})}
 
-function browserPrint(html){toast('الطباعة تفتح من داخل التطبيق على الجهاز');
-try{var f=document.createElement('iframe');f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';document.body.appendChild(f);var dc=f.contentWindow.document;dc.open();dc.write(html);dc.close();
-setTimeout(function(){try{f.contentWindow.focus();f.contentWindow.print()}catch(e){}setTimeout(function(){f.remove()},2000)},300)}catch(e){}}
+function browserPrint(html){toast('جاري تجهيز الطباعة...');var old=document.getElementById('bpf');if(old)old.remove();
+try{var f=document.createElement('iframe');f.id='bpf';f.style.cssText='position:fixed;left:-10000px;top:0;width:900px;height:1300px;border:0;visibility:hidden';document.body.appendChild(f);var w=f.contentWindow,dc=w.document;dc.open();dc.write(html);dc.close();
+var done=false,go=function(){if(done)return;done=true;setTimeout(function(){try{w.focus();w.print()}catch(e){toast('ما انفتحت نافذة الطباعة')}},200)};
+var ready=function(){var imgs=[].slice.call(dc.images).filter(function(i){return!i.complete}).map(function(i){return new Promise(function(r){i.onload=i.onerror=r})});
+Promise.all([dc.fonts&&dc.fonts.ready||0].concat(imgs)).then(go,go)};
+if(dc.readyState==='complete')ready();else w.addEventListener('load',ready);setTimeout(go,4000)}catch(e){toast('ما انفتحت نافذة الطباعة')}}
 function printO(o){var c=prnCfg(),A=window.Android;
 if(c.paper==='a4'||c.paper==='a5'){invDoc(o,c.paper).then(function(h){if(A&&A.printHtml2)A.printHtml2(h,SZ[c.paper].media);else if(A&&A.printHtml)A.printHtml(h);else browserPrint(h)});return}
 if(c.mode==='net'&&c.ip&&A&&A.printEscPos){A.printEscPos(rDoc(o,false,c.paper,true),c.ip,+c.port||9100,c.paper==='r58'?384:576,c.paper==='r58'?290:380,+c.copies||1);return}
@@ -1175,13 +1180,14 @@ return{id:'demo',demo:true,demoPh:it?it.src:null,no:S.seq||1001,at:Date.now(),ii
 var prnFound=null,prnScanning=false;
 function tplMock(k){return'<span class="tm tm-'+k+'"><i></i><b></b><b></b><em></em></span>'}
 function printTab(){var c=prnCfg(),inv=c.paper==='a4'||c.paper==='a5';
-return'<section class="card"><h3>الطابعة</h3>'+seg('pmode',[['dialog','اختيار الطابعة من النافذة'],['net','طابعة إيصالات على الشبكة (مباشر)']],c.mode)+
+if(!window.Android)return'<section class="card"><h3>الطابعة <small>إعدادات هذا الجهاز بس</small></h3><p class="mut">على الحاسبة، الطباعة تكون على الطابعة المعرّفة بالويندوز (A4 أو إيصالات). تنفتح نافذة الطباعة، تختار الطابعة، وتطبع.</p>'+'<div class="row" style="margin-top:10px"><button class="pri" data-a="prntry">'+ico(I.prn,16)+' طباعة تجريبية</button></div>'+'<p class="mut" style="margin-top:10px">بنافذة الطباعة: اختار الطابعة، وحجم الورق نفس الفاتورة (A4 أو A5)، والهوامش <b>افتراضي</b>، والمقياس <b>100</b>، وطفّي «الرؤوس والتذييلات».</p></section>'+printTab2(c,inv);
+return'<section class="card"><h3>الطابعة <small>إعدادات هذا الجهاز بس</small></h3>'+seg('pmode',[['dialog','اختيار الطابعة من النافذة'],['net','طابعة إيصالات على الشبكة (مباشر)']],c.mode)+
 (c.mode==='net'?'<div class="two" style="margin-top:12px"><div><label for="prnip">عنوان الطابعة (IP)</label><input type="text" id="prnip" dir="ltr" inputmode="decimal" value="'+esc(c.ip)+'" placeholder="192.168.1.100"></div><div><label for="prnport">المنفذ</label><input type="number" id="prnport" dir="ltr" value="'+(c.port||9100)+'"></div></div>'+
 '<div class="row" style="margin-top:10px;flex-wrap:wrap"><button class="ib" data-a="prnscan"'+(prnScanning?' disabled':'')+'>'+(prnScanning?'جاري البحث...':'🔍 بحث بالشبكة')+'</button><button class="ib" data-a="prntest">اختبار الاتصال</button></div>'+
 (prnFound?'<div class="pfound">'+(prnFound.length?prnFound.map(function(ip){return'<button class="chip'+(ip===c.ip?' on':'')+'" data-a="ppick" data-ip="'+ip+'">🖨 '+ip+'</button>'}).join(''):'<span class="mut">ما لكيت طابعة إيصالات على الشبكة. تأكد إنها شغالة ومربوطة بنفس الراوتر.</span>')+'</div>':'')+
 '<p class="mut" style="margin-top:10px">للطابعات الحرارية المربوطة بالراوتر (منفذ 9100). تطبع فوراً بدون نافذة وتقص الورقة.</p>':
-'<p class="mut" style="margin-top:10px">يفتح نافذة الطباعة وتختار أي طابعة: واي فاي، شبكة المكتب، أو «حفظ PDF». أول مرة تختارها، وأندرويد يتذكرها للمرات الجاية.</p>')+'</section>'+
-'<section class="card mainf"><h3>الفاتورة المعتمدة <small>نفس الفاتورة للطباعة والـ PDF المرسل للزبون والعرض بعد الحجز</small></h3>'+seg('ppaper',[['a4','فاتورة A4'],['a5','فاتورة A5'],['r80','إيصال 80مم'],['r58','إيصال 58مم']],c.paper)+
+'<p class="mut" style="margin-top:10px">يفتح نافذة الطباعة وتختار أي طابعة: واي فاي، شبكة المكتب، أو «حفظ PDF». أول مرة تختارها، وأندرويد يتذكرها للمرات الجاية.</p>')+'<div class="row" style="margin-top:10px"><button class="pri" data-a="prntry">'+ico(I.prn,16)+' طباعة تجريبية</button></div></section>'+printTab2(c,inv)}
+function printTab2(c,inv){return'<section class="card mainf"><h3>الفاتورة المعتمدة <small>نفس الفاتورة للطباعة والـ PDF المرسل للزبون والعرض بعد الحجز</small></h3>'+seg('ppaper',[['a4','فاتورة A4'],['a5','فاتورة A5'],['r80','إيصال 80مم'],['r58','إيصال 58مم']],c.paper)+
 (inv?'<label>قالب الفاتورة</label><div class="tpls">'+['classic','modern','minimal'].map(function(k){return'<button class="tpl'+(c.tpl===k?' on':'')+'" data-a="ptpl" data-v="'+k+'">'+tplMock(k)+'<span>'+TPLN[k]+'</span></button>'}).join('')+'</div>'+
 '<label class="cbx" style="margin-top:12px!important"><input type="checkbox" data-a="pimg"'+(c.img?' checked':'')+'> إظهار صورة الكيك بالجدول</label><label class="cbx" style="margin-top:8px!important"><input type="checkbox" data-a="pcimg"'+(c.cimg?' checked':'')+'> إظهار الصورة المرفقة من الزبون</label>':
 '<p class="mut" style="margin-top:10px">الإيصال مناسب لطابعات الإيصالات الصغيرة. للفاتورة الكاملة بالقالب اختار A4 أو A5.</p>')+
@@ -1210,7 +1216,7 @@ if(a==='pmode'){setPrn('mode',val);render()}else if(a==='ppaper'){setPrn('paper'
 else if(a==='ptpl'){setPrn('tpl',val);render()}else if(a==='ppdf'){setPrn('pdf',val);render()}else if(a==='ppdfs'){setPrn('pdfSize',val);render()}
 else if(a==='ppick'){setPrn('ip',b.dataset.ip);render();toast('تم اختيار الطابعة '+b.dataset.ip)}
 else if(a==='prnscan'){if(window.Android&&Android.findPrinters){prnScanning=true;prnFound=null;render();Android.findPrinters()}else toast('البحث بالشبكة يشتغل من داخل التطبيق على الجهاز')}
-else if(a==='prntest'){var c=prnCfg();if(!c.ip)return toast('اكتب عنوان الطابعة أول');if(window.Android&&Android.testPrinter)Android.testPrinter(c.ip,+c.port||9100);else toast('الاختبار يشتغل من داخل التطبيق')}
+else if(a==='prntest'){var c=prnCfg();if(!c.ip)return toast('اكتب عنوان الطابعة أول، أو اضغط «بحث بالشبكة»');if(window.Android&&Android.testPrinter){toast('جاري الاختبار...');Android.testPrinter(c.ip,+c.port||9100)}}
 else if(a==='prntry')printO(sampleO());else if(a==='pdftry'){var s=sampleO();s=JSON.parse(JSON.stringify(s));s.phone='';sendPDF(s)}});
 document.addEventListener('change',function(e){var t=e.target,a=t.dataset.a;if(!isAdmin())return;
 if(t.id==='prnip'){setPrn('ip',t.value.trim())}else if(t.id==='prnport'){setPrn('port',+t.value||9100)}else if(t.id==='prnph'){setPrn('phone',t.value.trim());pvLoad()}else if(t.id==='prnaddr'){setPrn('addr',t.value.trim());pvLoad()}
@@ -1329,16 +1335,16 @@ function clStatus(){var el=$('#clst');if(el)el.innerHTML=clStatusHTML()}
 
 /* First-time setup */
 var setupErr='';
-function checkSetup(){return dget('meta/setup',true).then(function(){CL.setup=true;clSave();return true}).catch(function(e){if(e.status===404){CL.setup=false;return false}if(e.status===403){CL.setup=true;return true}throw e})}
+function checkSetup(){return dget('meta/setup',true).then(function(){CL.setup=true;clSave();return true}).catch(function(e){if(e.status===404){CL.setup=false;return false}if(e.status===403){var x=new Error('قواعد الحماية (Rules) مو منشورة بـ Firestore. انشرها وارجع جرّب');x.status=403;throw x}throw e})}
 function setupV(){return'<div class="login"><div class="box">'+brand().replace('class="brand"','class="brand" style="justify-content:center"')+'<h1>إعداد النظام لأول مرة</h1><p class="mut">هذا يصير مرة وحدة بس. سوّي حساب المدير الرئيسي.</p>'+
 '<input type="text" id="stn" placeholder="اسم المدير" value="المدير"><input type="password" id="stp" placeholder="كلمة المرور (6 أحرف أو أكثر)"><input type="password" id="stp2" placeholder="أعد كتابة كلمة المرور">'+
 '<label class="cbx" style="justify-content:center;white-space:normal;text-align:start"><input type="checkbox" id="stup" checked> رفع البيانات الموجودة بهذا الجهاز (الأقسام والصور والأسعار والطلبات)</label><div class="err">'+setupErr+'</div><button class="pri big" data-a="dosetup">إنشاء النظام</button></div></div>'}
 function doSetup(){var n=$('#stn').value.trim()||'المدير',p=$('#stp').value,p2=$('#stp2').value,up=$('#stup').checked;
 if(p.length<6){setupErr='كلمة المرور لازم 6 أحرف أو أكثر';return render()}if(p!==p2){setupErr='كلمتين المرور مو نفس الشي';return render()}
 setupErr='';v='sync';render();var email='admin'+Date.now().toString(36)+FB.dom,adminTok=null;
-checkSetup().then(function(done){if(done)throw new Error('النظام متعدّ مسبقاً، سجّل دخول')}).then(function(){return authCall('signUp',{email:email,password:p,returnSecureToken:true})}).then(function(j){setTok(j);CL.email=email;
+checkSetup().then(function(done){if(done)throw new Error('النظام معدّ مسبقاً، سجّل دخول')}).then(function(){return authCall('signUp',{email:email,password:p,returnSecureToken:true})}).then(function(j){setTok(j);CL.email=email;
 var me={uid:j.localId,n:n,r:'admin',email:email};return dset('users/'+j.localId,{n:n,r:'admin',email:email}).then(function(){return dset('public/staff',{list:[me]})}).then(function(){
-return authCall('signUp',{email:MASTER_EMAIL,password:'351993',returnSecureToken:true}).then(function(m){return dset('users/'+m.localId,{n:'Meras Tech',r:'admin',email:MASTER_EMAIL,hidden:true})}).catch(function(){})})
+return null})
 .then(function(){return dset('meta/counter',{seq:Math.max(1000,(S.seq||1001)-1)})}).then(function(){return dset('meta/setup',{at:Date.now(),by:n})}).then(function(){
 CL.setup=true;CL.staff=[me];CL.me={n:n,r:'admin'};curU={id:j.localId,n:n,r:'admin'};admAct=Date.now();CL.rev={};CL.lastOrd=0;CL.dirty={};CL.snap={};
 if(!up){S.cats=[];S.orders=[]}CL.ready=true;clSave();saveSess();clDiff();v='admin';tab='set';render();toast('تم إنشاء النظام ✓ '+(up?'جاري رفع البيانات...':''))})})
@@ -1366,6 +1372,7 @@ return'<section class="card"><h3>المستخدمين <small>الحسابات م
 L.map(function(u){var last=u.r==='admin'&&na===1,me=curU&&u.uid===curU.id;return'<div class="lr urow"><span class="av">'+esc(ini(u.n))+'</span><input type="text" value="'+esc(u.n)+'" data-a="cun" data-id="'+u.uid+'"><select data-a="cur" data-id="'+u.uid+'"'+(last?' disabled title="لازم يبقى مدير رئيسي واحد"':'')+'>'+Object.keys(ROLES).map(function(k){return'<option value="'+k+'"'+(u.r===k?' selected':'')+'>'+ROLES[k]+'</option>'}).join('')+'</select>'+
 '<button class="ib sm" data-a="cpw" data-id="'+u.uid+'">كلمة المرور</button><button class="dng" data-a="cdel" data-id="'+u.uid+'"'+(me||last?' disabled':'')+'>حذف</button>'+(me?'<span class="mut nw">(إنت)</span>':'')+'</div>'}).join('')+
 '<div style="margin-top:12px"><button class="pri" data-a="cadd">+ مستخدم جديد</button></div></section>'+
+(sup?'<section class="card"><h3>حساب Meras Tech المخفي <small>تدخل بيه بكتابة الرقم السري وبعده كلمتك السرية بدون فراغ</small></h3><button class="ib" data-a="cmst">تعيين / تغيير الكلمة السرية</button></section>':'')+
 '<section class="card"><h3>الصلاحيات</h3><div class="scroll"><table class="perm"><thead><tr><th></th><th>مدير رئيسي</th><th>إداري</th><th>كاشير</th></tr></thead><tbody>'+PERM.map(function(p){return'<tr><td>'+p[0]+'</td><td>'+mk(p[1])+'</td><td>'+mk(p[2])+'</td><td>'+mk(p[3])+'</td></tr>'}).join('')+'</tbody></table></div></section>'}
 function admins(){return CL.staff.filter(function(u){return u.r==='admin'})}
 
@@ -1380,12 +1387,13 @@ return'<div class="login"><div class="box">'+brand().replace('class="brand"','cl
 (U.length?'<p class="mut">اختار اسمك واكتب كلمة المرور</p><div class="ulist">'+U.map(function(u){return'<button class="uch'+(u.uid===selU?' on':'')+'" data-a="selu" data-id="'+u.uid+'"><span class="av">'+esc(ini(u.n))+'</span><b>'+esc(u.n||'—')+'</b><small>'+ROLES[u.r]+'</small></button>'}).join('')+'</div>':'<p class="mut">'+(CL.online?'جاري تحميل الأسماء...':'يحتاج إنترنت لأول دخول')+'</p><button class="ib" data-a="relog">إعادة المحاولة</button>')+
 '<input type="password" id="pw" placeholder="كلمة المرور" autocomplete="off"><div class="err">'+err+'</div><button class="pri" data-a="enter2">دخول</button></div></div>'}
 var logBusy=false;
-function doLogin(){if(logBusy)return;var pv=($('#pw')||{}).value||'',isM=hx(pv)===MK,u=null;
+function doLogin(){if(logBusy)return;var pv=($('#pw')||{}).value||'',isM=pv.length>6&&hx(pv.slice(0,6))===MK,u=null;
+if(hx(pv)===MK){if(curU&&curU.r==='admin'&&CL.ref){sup=true;supK=pv;err='';admAct=Date.now();v='admin';render();return}err='كلمة المرور غير صحيحة';return render()}
 if(!isM){u=CL.staff.filter(function(x){return x.uid===selU})[0];if(!u){err=CL.staff.length?'اختار اسمك أول':'ماكو اتصال، حاول مرة ثانية';return render()}}
 var email=isM?MASTER_EMAIL:u.email,wasUid=CL.uid,hadData=Object.keys(CL.snap).length>0;
 if(curU&&!isM&&curU.id===u.uid&&CL.ref&&!CL.online&&pv){/* No internet: open the lock with the saved session */}
 logBusy=true;err='';var b=$('[data-a=enter2]');if(b){b.disabled=true;b.textContent='جاري الدخول...'}
-signIn(email,pv).then(function(){return dget('users/'+CL.uid)}).then(function(d){var me=fromF(d.fields||{});curU={id:CL.uid,n:me.n,r:me.r};CL.me={n:me.n,r:me.r};CL.ph=hx(pv+'|'+CL.uid);sup=isM;clSave();
+signIn(email,pv).then(function(){return dget('users/'+CL.uid)}).then(function(d){var me=fromF(d.fields||{});curU={id:CL.uid,n:me.n,r:me.r};CL.me={n:me.n,r:me.r};CL.ph=hx(pv+'|'+CL.uid);sup=isM;if(isM)supK=pv.slice(0,6);clSave();
 if(!hadData){v='sync';render();return pullAll()}}).then(function(){logBusy=false;CL.ready=true;clSave();admAct=Date.now();clFlush();
 if(loginTo==='home'){loginTo='admin';v='home';render();toast('أهلاً '+(curU.n||''));return}v='admin';tab=TABS_BY[role()][0];render()})
 .catch(function(e){logBusy=false;if(e.net&&curU&&CL.ph&&hx(pv+'|'+curU.id)===CL.ph){err='';admAct=Date.now();v='admin';if(TABS_BY[role()].indexOf(tab)<0)tab=TABS_BY[role()][0];render();toast('فتحت بدون إنترنت');return}if(e.status===404||e.status===403){logout();err='هذا الحساب موقوف أو محذوف'}else err=e.message||'صار خطأ';v='login';render()})}
@@ -1397,7 +1405,14 @@ if(a==='dosetup'){e.stopImmediatePropagation();doSetup()}
 else if(a==='relog'){e.stopImmediatePropagation();refreshLoginInfo(true)}
 else if(a==='cadd'&&isAdmin()){e.stopImmediatePropagation();cAddUser()}
 else if(a==='cdel'&&isAdmin()){e.stopImmediatePropagation();cDelUser(b.dataset.id)}
-else if(a==='cpw'&&isAdmin()){e.stopImmediatePropagation();cPassUser(b.dataset.id)}},true);
+else if(a==='cpw'&&isAdmin()){e.stopImmediatePropagation();cPassUser(b.dataset.id)}
+else if(a==='cmst'&&isAdmin()&&sup){e.stopImmediatePropagation();cMaster()}},true);
+function cMaster(){askH('<div class="cold"><h3>حساب Meras Tech</h3><label for="mw">الكلمة السرية الجديدة (6 أحرف أو أكثر)</label><input type="text" id="mw" dir="ltr" autocomplete="off"><label for="mo">كلمة المرور الحالية للحساب (إذا كان موجود)</label><input type="text" id="mo" dir="ltr" autocomplete="off" placeholder="اتركها فارغة إذا أول مرة"></div>','حفظ',function(){
+var w=$('#mw').value.trim(),o=$('#mo').value.trim(),np=supK+w;if(w.length<6){toast('الكلمة السرية 6 أحرف أو أكثر');return false}toast('جاري الحفظ...');
+function doc(uid){return dset('users/'+uid,{n:'Meras Tech',r:'admin',email:MASTER_EMAIL,hidden:true})}
+authCall('signUp',{email:MASTER_EMAIL,password:np,returnSecureToken:true}).then(function(m){return doc(m.localId)},function(e){if(e.code!=='EMAIL_EXISTS')throw e;if(!o)throw new Error('الحساب موجود، اكتب كلمة المرور الحالية');
+return authCall('signInWithPassword',{email:MASTER_EMAIL,password:o,returnSecureToken:true}).then(function(m){return authCall('update',{idToken:m.idToken,password:np,returnSecureToken:true}).then(function(){return doc(m.localId)})})})
+.then(function(){toast('تم ✓')}).catch(function(e){toast(e.message)})},'go')}
 document.addEventListener('change',function(e){var t=e.target,a=t.dataset.a;if(!isAdmin())return;
 if(a==='cun'){var n=t.value.trim();if(n)cEditUser(t.dataset.id,'n',n)}else if(a==='cur'){cEditUser(t.dataset.id,'r',t.value)}});
 function refreshLoginInfo(force){return checkSetup().then(function(done){return done?pullStaff():null}).then(function(){CL.online=true;if(v==='login'||v==='setup'){if(CL.setup===false)v='setup';render()}}).catch(function(e){CL.online=!e.net;if(force)toast(e.message);if(v==='login')render()})}
