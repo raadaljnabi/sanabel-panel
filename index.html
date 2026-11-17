@@ -1209,7 +1209,7 @@ function pvFit(){return fitFrame('#pvw','#pvf');var b=$('#pvw'),f=$('#pvf');if(!
 f.style.width=w+'px';f.style.height=h+'px';f.style.transform='scale('+s+')';b.style.height=Math.ceil(h*s)+'px'}
 window.addEventListener('resize',function(){if(v==='admin'&&tab==='prn')pvFit();if(PD&&PD.step==='rc')fitFrame('#rcpv','#rcpf')});
 window.__prnFound=function(list,n){prnScanning=false;prnFound=list||[];if(!n)toast('الجهاز مو مربوط بشبكة واي فاي');if(v==='admin'&&tab==='prn')render()};
-window.__prnTest=function(ok){toast(ok?'✓ الطابعة متصلة وجاهزة':'✗ ما گدر يوصل للطابعة. تأكد من العنوان وإنها شغالة')};
+window.__prnTest=function(ok,why){if(ok)toast('✓ الطابعة متصلة وجاهزة');else askH('<div class="cold"><h3>✗ ما گدر يوصل للطابعة</h3><p dir="ltr" style="text-align:right">'+esc(prnCfg().ip)+'</p><p><b>السبب:</b> '+esc(why||'غير معروف')+'</p><p class="mut">تأكد: الطابعة شغالة، والتابلت على نفس الواي فاي، وماكو جهاز ثاني (مثل الحاسبة) مربوط عليها هسه.</p></div>','تمام',function(){},'go')};
 ['pmode','ppaper','pcopies','pauto','ptpl','ppdf','ppdfs','ppick','prnscan','prntest','prntry','pdftry'].forEach(function(k){WRITE[k]=1});
 document.addEventListener('click',function(e){var b=e.target.closest('[data-a]');if(!b||!isAdmin())return;var a=b.dataset.a,val=b.dataset.v;
 if(a==='pmode'){setPrn('mode',val);render()}else if(a==='ppaper'){setPrn('paper',val);render()}else if(a==='pcopies'){setPrn('copies',+val);render()}else if(a==='pauto'){setPrn('auto',val==='1');render()}
