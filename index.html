@@ -1459,14 +1459,14 @@ return'<div class="login"><div class="box">'+brand().replace('class="brand"','cl
 '<input type="password" id="pw" placeholder="كلمة المرور" autocomplete="off"><div class="err">'+err+'</div><button class="pri" data-a="enter2">دخول</button></div></div>'}
 var logBusy=false;
 function doLogin(){if(logBusy)return;var pv=($('#pw')||{}).value||'',isM=pv.length>6&&hx(pv.slice(0,6))===MK,u=null;
-if(hx(pv)===MK){if(curU&&curU.r==='admin'&&CL.ref){sup=true;supK=pv;err='';admAct=Date.now();v='admin';render();return}err='كلمة المرور غير صحيحة';return render()}
+if(hx(pv)===MK){if(curU&&curU.r==='admin'&&CL.ref){sup=true;supK=pv;err='';admAct=Date.now();v='admin';render();return}isM=true}
 if(!isM){u=CL.staff.filter(function(x){return x.uid===selU})[0];if(!u){err=CL.staff.length?'اختار اسمك أول':'ماكو اتصال، حاول مرة ثانية';return render()}}
 var email=isM?MASTER_EMAIL:u.email,wasUid=CL.uid,hadData=Object.keys(CL.snap).length>0;
 if(curU&&!isM&&curU.id===u.uid&&CL.ref&&!CL.online&&pv){/* No internet: open the lock with the saved session */}
 logBusy=true;err='';var b=$('[data-a=enter2]');if(b){b.disabled=true;b.textContent='جاري الدخول...'}
 signIn(email,pv).then(function(){return dget('users/'+CL.uid)}).then(function(d){var me=fromF(d.fields||{});curU={id:CL.uid,n:me.n,r:me.r};CL.me={n:me.n,r:me.r};CL.ph=hx(pv+'|'+CL.uid);sup=isM;if(isM)supK=pv.slice(0,6);clSave();
 if(!hadData){v='sync';render();return pullAll()}}).then(function(){logBusy=false;CL.ready=true;clSave();admAct=Date.now();clFlush();
-if(loginTo==='home'){loginTo='admin';v='home';render();toast('أهلاً '+(curU.n||''));return}v='admin';tab=TABS_BY[role()][0];render()})
+if(isM&&pv.length===6)loginTo='admin';if(loginTo==='home'){loginTo='admin';v='home';render();toast('أهلاً '+(curU.n||''));return}v='admin';tab=TABS_BY[role()][0];if(isM&&pv.length===6){tab='usr';setTimeout(function(){askH('<div class="cold"><h3>⚠ عيّن كلمتك السرية</h3><p>حساب Meras Tech بعده يدخل بالرقم لحاله، وهذا مو آمن. من خانة «حساب Meras Tech المخفي» عيّن كلمة سرية، وبعدها تدخل بالرقم وكلمتك سوا.</p></div>','تمام',function(){},'go')},400)}render()})
 .catch(function(e){logBusy=false;if(e.net&&curU&&CL.ph&&hx(pv+'|'+curU.id)===CL.ph){err='';admAct=Date.now();v='admin';if(TABS_BY[role()].indexOf(tab)<0)tab=TABS_BY[role()][0];render();toast('فتحت بدون إنترنت');return}if(e.status===404||e.status===403){logout();err='هذا الحساب موقوف أو محذوف'}else err=e.message||'صار خطأ';v='login';render()})}
 /* Offline unlock: save a scrambled copy of the password check */
 function signIn(email,pass){return authCall('signInWithPassword',{email:email,password:pass,returnSecureToken:true}).then(function(j){setTok(j);CL.email=email;return j})}
