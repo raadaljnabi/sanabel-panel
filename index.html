@@ -1406,19 +1406,18 @@ function clStatus(){var el=$('#clst');if(el)el.innerHTML=clStatusHTML()}
 
 /* First-time setup */
 var setupErr='';
-function checkSetup(){return dget('meta/setup',true).then(function(){CL.setup=true;clSave();return true}).catch(function(e){if(e.status===404){CL.setup=false;return false}if(e.status===403){var x=new Error('قواعد الحماية (Rules) مو منشورة بـ Firestore. انشرها وارجع جرّب');x.status=403;throw x}throw e})}
-function setupV(){return'<div class="login"><div class="box">'+brand().replace('class="brand"','class="brand" style="justify-content:center"')+'<h1>إعداد النظام لأول مرة</h1><p class="mut">هذا يصير مرة وحدة بس. سوّي حساب المدير الرئيسي.</p>'+
-'<input type="text" id="stn" placeholder="اسم المدير" value="المدير"><input type="password" id="stp" placeholder="كلمة المرور (6 أحرف أو أكثر)"><input type="password" id="stp2" placeholder="أعد كتابة كلمة المرور">'+
-'<label class="cbx" style="justify-content:center;white-space:normal;text-align:start"><input type="checkbox" id="stup" checked> رفع البيانات الموجودة بهذا الجهاز (الأقسام والصور والأسعار والطلبات)</label><div class="err">'+setupErr+'</div><button class="pri big" data-a="dosetup">إنشاء النظام</button></div></div>'}
-function doSetup(){var n=$('#stn').value.trim()||'المدير',p=$('#stp').value,p2=$('#stp2').value,up=$('#stup').checked;
-if(p.length<6){setupErr='كلمة المرور لازم 6 أحرف أو أكثر';return render()}if(p!==p2){setupErr='كلمتين المرور مو نفس الشي';return render()}
-setupErr='';v='sync';render();var email='admin'+Date.now().toString(36)+FB.dom,adminTok=null;
-checkSetup().then(function(done){if(done)throw new Error('النظام معدّ مسبقاً، سجّل دخول')}).then(function(){return authCall('signUp',{email:email,password:p,returnSecureToken:true})}).then(function(j){setTok(j);CL.email=email;
-var me={uid:j.localId,n:n,r:'admin',email:email};return dset('users/'+j.localId,{n:n,r:'admin',email:email}).then(function(){return dset('public/staff',{list:[me]})}).then(function(){
+function checkSetup(){return dget('meta/setup',true).then(function(d){var x=fromF(d.fields||{}),sid=x.sid||'legacy';if(CL.sid&&CL.sid!==sid)resetLocal(sid);CL.sid=sid;CL.setup=true;clSave();return true}).catch(function(e){if(e.status===404){if(CL.sid||CL.uid)resetLocal('');CL.setup=false;return false}if(e.status===403){var x=new Error('قواعد الحماية (Rules) مو منشورة بـ Firestore. انشرها وارجع جرّب');x.status=403;throw x}throw e})}
+function resetLocal(sid){var was=!!curU;logout();CL.snap={};CL.rev={};CL.lastOrd=0;CL.dirty={};CL.staff=[];CL.mEmail='';CL.sid=sid;S.orders=[];try{LQ=[];lsS('sanabel_lq',[]);NT=[];lsS('sanabel_nt',[]);LG=[];lsS('sanabel_lg',[])}catch(e){}clSave();save();if(was){v='login';loginTo='home';err='النظام انصفّر. سجّل دخول من جديد'}}
+function setupV(){return'<div class="login"><div class="box">'+brand().replace('class="brand"','class="brand" style="justify-content:center"')+'<h1>إعداد النظام لأول مرة</h1><p class="mut">يتسوّى حساب الدعم المخفي تلقائياً، وبعدها تضيف المدير والموظفين من صفحة «المستخدمين».</p>'+
+'<label class="cbx" style="justify-content:center;white-space:normal;text-align:start"><input type="checkbox" id="stup"> رفع الأقسام والصور والأسعار الموجودة بهذا الجهاز (إذا ما تختارها، يبدي النظام فارغ)</label><div class="err">'+setupErr+'</div><button class="pri big" data-a="dosetup">إنشاء النظام</button></div></div>'}
+function doSetup(){var n='Meras Tech',p=SUP_PW,up=$('#stup').checked,sid=tok();
+setupErr='';v='sync';render();var email=MASTER_EMAIL,adminTok=null;
+checkSetup().then(function(done){if(done)throw new Error('النظام معدّ مسبقاً، سجّل دخول')}).then(function(){return authCall('signUp',{email:email,password:p,returnSecureToken:true}).catch(function(e){if(e.code!=='EMAIL_EXISTS')throw e;return authCall('signInWithPassword',{email:email,password:p,returnSecureToken:true}).catch(function(){throw new Error('حساب الدعم القديم موجود بـ Authentication. احذفه من Firebase وارجع جرّب')})})}).then(function(j){setTok(j);CL.email=email;
+var me={uid:j.localId,n:n,r:'admin',email:email};return dset('users/'+j.localId,{n:n,r:'admin',email:email,hidden:true}).then(function(){return dset('public/staff',{list:[]})}).then(function(){
 return null})
-.then(function(){return dset('meta/counter',{seq:Math.max(1000,(S.seq||1001)-1)})}).then(function(){return dset('meta/setup',{at:Date.now(),by:n})}).then(function(){
-CL.setup=true;CL.staff=[me];CL.me={n:n,r:'admin'};curU={id:j.localId,n:n,r:'admin'};admAct=Date.now();CL.rev={};CL.lastOrd=0;CL.dirty={};CL.snap={};
-if(!up){S.cats=[];S.orders=[]}CL.ready=true;clSave();saveSess();clDiff();v='admin';tab='set';render();toast('تم إنشاء النظام ✓ '+(up?'جاري رفع البيانات...':''))})})
+.then(function(){return dset('meta/counter',{seq:Math.max(1000,(S.seq||1001)-1)})}).then(function(){return dset('meta/setup',{at:Date.now(),by:n,sid:sid})}).then(function(){
+CL.setup=true;CL.sid=sid;CL.staff=[];CL.mEmail='';CL.me={n:n,r:'admin'};curU={id:j.localId,n:n,r:'admin'};sup=true;supK='351993';admAct=Date.now();CL.rev={};CL.lastOrd=0;CL.dirty={};CL.snap={};
+S.orders=[];if(!up)S.cats=[];CL.ready=true;clSave();saveSess();clDiff();v='admin';tab='usr';render();toast('تم إنشاء النظام ✓ هسه ضيف المدير من «مستخدم جديد»')})})
 .catch(function(e){setupErr=e.message;v='setup';render()})}
 
 /* Users on Firebase */
@@ -1459,7 +1458,7 @@ return'<div class="login"><div class="box">'+brand().replace('class="brand"','cl
 '<label for="lun" class="sr">اسم المستخدم</label><input type="text" id="lun" placeholder="اسم المستخدم" autocomplete="username" autocapitalize="off" spellcheck="false" value="'+esc(lsG('sanabel_lun',''))+'"><label for="pw" class="sr">كلمة المرور</label><input type="password" id="pw" placeholder="كلمة المرور" autocomplete="current-password"><div class="err">'+err+'</div><button class="pri" data-a="enter2">دخول</button></div></div>'}
 function unorm(x){return String(x||'').trim().toLowerCase().replace(/\s+/g,' ')}
 function lname(u){return u.un||u.n||''}
-var MUN=['meras','ميراس'],LGU=null;
+var MUN=['meras','ميراس'],LGU=null,SUP_PW='351993';
 var logBusy=false;
 function doLogin(){if(logBusy)return;var pv=($('#pw')||{}).value||'',isM=pv.length>6&&hx(pv.slice(0,6))===MK,u=null;
 if(hx(pv)===MK){if(curU&&curU.r==='admin'&&CL.ref){sup=true;supK=pv;err='';admAct=Date.now();v='admin';render();return}isM=true}
@@ -1490,7 +1489,8 @@ function mRecover(pv){var A=CL.staff.filter(function(u){return u.r==='admin'});i
 askH('<div class="cold"><h3>نسيت كلمة مرور الدعم؟</h3><p class="mut">سجّل بحساب المدير الرئيسي، وبعدها عيّن كلمة مرور جديدة لحساب الدعم.</p><label for="mra">المدير</label><select id="mra">'+A.map(function(u){return'<option value="'+u.uid+'">'+esc(u.n)+'</option>'}).join('')+'</select><label for="mrp">كلمة مرور المدير</label><input type="password" id="mrp" autocomplete="off"></div>','متابعة',function(){
 var p2=$('#mrp').value;if(!p2){toast('اكتب كلمة مرور المدير');return false}MREC='351993';LGU=$('#mra').value;setTimeout(function(){var f=$('#pw');if(f)f.value=p2;doLogin();setTimeout(function(){if(v==='login'&&MREC){MREC=''}},15000)},50)},'go')}
 function cMaster(){askH('<div class="cold"><h3>حساب الدعم (Meras Tech)</h3><p class="mut">اسم المستخدم: <b dir="ltr">meras</b></p><label for="mw">كلمة مرور حساب الدعم</label><input type="text" id="mw" dir="ltr" autocomplete="off" placeholder="6 أحرف أو أكثر"></div>','حفظ',function(){
-var w=$('#mw').value.trim();if(w.length<6){toast('كلمة المرور 6 أحرف أو أكثر');return false}var np=w,ne='meras'+tok().toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,10)+FB.dom,myUid=CL.uid,nu;toast('جاري الحفظ...');
+var w=$('#mw').value.trim();if(w.length<6){toast('كلمة المرور 6 أحرف أو أكثر');return false}if(curU&&CL.uid&&curU.n==='Meras Tech'&&sup&&CL.email===(CL.mEmail||MASTER_EMAIL)){toast('جاري الحفظ...');ensureTok().then(function(){return authCall('update',{idToken:CL.tok,password:w,returnSecureToken:true})}).then(function(j){setTok(j);toast('تم ✓ كلمة مرور الدعم تغيّرت')}).catch(function(e){toast(e.message||'صار خطأ')});return}
+var np=w,ne='meras'+tok().toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,10)+FB.dom,myUid=CL.uid,nu;toast('جاري الحفظ...');
 authCall('signUp',{email:ne,password:np,returnSecureToken:true}).then(function(m){nu=m.localId;return dset('users/'+nu,{n:'Meras Tech',r:'admin',email:ne,hidden:true})})
 .then(function(){return dlist('users')}).then(function(L){return Promise.all(L.filter(function(u){return u.hidden&&u.__id!==nu}).map(function(u){return ddel('users/'+u.__id)}))})
 .then(function(){CL.mEmail=ne;return saveStaff(CL.staff)}).then(function(){if(curU&&curU.n==='Meras Tech'&&myUid!==nu){toast('تم ✓ سجّل دخول من جديد: meras وكلمة المرور الجديدة');setTimeout(function(){logout();v='login';render()},1800)}else toast('تم ✓ حساب الدعم: meras وكلمة المرور الجديدة')})
@@ -1832,7 +1832,8 @@ function phBadge(h,o){var n=+o.phn||0;if(n<2)return h;return h.replace(/(<img cl
 var _ordCard2=ordCard;ordCard=function(o){return phBadge(_ordCard2(o),o)};
 var _kitV=kitV;kitV=function(){var h=_kitV();S.orders.forEach(function(o){if(+o.phn>1&&h.indexOf('data-ph="'+o.id+'"')>=0)h=h.replace(new RegExp('(<img class="oph" data-ph="'+o.id+'"[^>]*>)'),'<span class="phw">$1<em class="phn">'+o.phn+'</em></span>')});return h};
 
-loadSess();if(!curU){v='login';loginTo='home';refreshLoginInfo()}else{setTimeout(function(){clFlush();clPoll();pullStaff().catch(function(){})},1500)}
+loadSess();if(!curU){v='login';loginTo='home';refreshLoginInfo()}else{setTimeout(function(){clFlush();clPoll();pullStaff().catch(function(){});chkReset()},1500)}
+function chkReset(){if(!CL.uid&&!CL.sid&&v!=='setup'&&v!=='login')return;checkSetup().then(function(ok){if(!curU){v=ok?'login':'setup';render()}}).catch(function(){})}setInterval(chkReset,5*60000);
 
 render();
 (function(){var sp=$('#splash');if(!sp)return;$('#sps').textContent=S.slogan||'';if(S.logo){var sv=sp.querySelector('svg');var im=document.createElement('img');im.src=S.logo;im.alt='';im.className='splogo';sv.parentNode.replaceChild(im,sv)}var done=false;
