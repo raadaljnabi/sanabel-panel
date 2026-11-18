@@ -1384,7 +1384,7 @@ list.forEach(function(r){mx=Math.max(mx,r.upd||0);var id=r.__id;delete r.__id;if
 if(r.del){if(i>=0)S.orders.splice(i,1);delete CL.snap['orders/'+id];return}r.id=id;
 if(i>=0){if((S.orders[i].upd||0)>(r.upd||0))return;var ph=S.orders[i].photo;S.orders[i]=r;if(ph)r.photo=ph}else S.orders.push(r);CL.snap['orders/'+id]=hsh(JSON.stringify(ordObj(r)))});
 S.orders.sort(function(a,b){return b.at-a.at});S.orders.forEach(function(o){if(+o.no>=S.seq)S.seq=+o.no+1});CL.lastOrd=mx;clSave();quietSave();if(list.length)liveRender()})}
-function pullStaff(){return dget('public/staff',true).then(function(d){CL.staff=(fromF(d.fields||{}).list)||[];if(curU){var me=CL.staff.filter(function(u){return u.uid===curU.id})[0];if(me&&(me.r!==curU.r||me.n!==curU.n)){curU.r=me.r;curU.n=me.n;CL.me={n:me.n,r:me.r}}}clSave()}).catch(function(e){if(e.status===404){CL.staff=[];return}throw e})}
+function pullStaff(){return dget('public/staff',true).then(function(d){var sx=fromF(d.fields||{});CL.staff=sx.list||[];CL.mEmail=sx.m||'';if(curU){var me=CL.staff.filter(function(u){return u.uid===curU.id})[0];if(me&&(me.r!==curU.r||me.n!==curU.n)){curU.r=me.r;curU.n=me.n;CL.me={n:me.n,r:me.r}}}clSave()}).catch(function(e){if(e.status===404){CL.staff=[];return}throw e})}
 function clPoll(){if(!CL.uid||!CL.ref||!CL.ready||CL.pulling)return;CL.pulling=true;
 dget('meta/rev').then(function(d){var r=fromF(d.fields||{}),jobs=[];
 if((r.cat||0)!==(CL.rev.cat||0)||(r.cfg||0)!==(CL.rev.cfg||0))jobs.push(pullCatalog().then(function(){CL.rev.cat=r.cat||0;CL.rev.cfg=r.cfg||0}));
@@ -1426,7 +1426,7 @@ function cAddUser(){askH('<div class="cold"><h3>مستخدم جديد</h3><label
 'إضافة',function(){var n=$('#nun').value.trim(),r=$('#nur').value,p=$('#nup').value.trim();if(!n){toast('اكتب الاسم');return false}if(p.length<6){toast('كلمة المرور 6 أحرف أو أكثر');return false}
 var email='u'+Date.now().toString(36)+FB.dom;toast('جاري الإضافة...');authCall('signUp',{email:email,password:p,returnSecureToken:true}).then(function(j){var u={uid:j.localId,n:n,r:r,email:email};
 return dset('users/'+u.uid,{n:n,r:r,email:email}).then(function(){var L=CL.staff.concat([u]);return saveStaff(L)})}).then(function(){toast('تمت إضافة '+n+' ✓');render()}).catch(function(e){toast(e.message)})},'go')}
-function saveStaff(L){return dset('public/staff',{list:L}).then(function(){CL.staff=L;clSave();return dinc('meta/rev',['usr']).then(function(r){if(r[0]===(CL.rev.usr||0)+1)CL.rev.usr=r[0]})})}
+function saveStaff(L){return dset('public/staff',CL.mEmail?{list:L,m:CL.mEmail}:{list:L}).then(function(){CL.staff=L;clSave();return dinc('meta/rev',['usr']).then(function(r){if(r[0]===(CL.rev.usr||0)+1)CL.rev.usr=r[0]})})}
 function cDelUser(uid){var u=CL.staff.filter(function(x){return x.uid===uid})[0];if(!u)return;ask('حذف المستخدم «'+u.n+'»؟ ما يكدر يدخل بعد.','حذف',function(){ddel('users/'+uid).then(function(){return saveStaff(CL.staff.filter(function(x){return x.uid!==uid}))}).then(function(){toast('تم الحذف');render()}).catch(function(e){toast(e.message)})})}
 function cEditUser(uid,field,val){var L=CL.staff.map(function(x){if(x.uid!==uid)return x;var y={};for(var k in x)y[k]=x[k];y[field]=val;return y}),u=L.filter(function(x){return x.uid===uid})[0];
 dset('users/'+uid,{n:u.n,r:u.r,email:u.email}).then(function(){return saveStaff(L)}).then(function(){if(curU&&curU.id===uid){curU[field]=val;CL.me={n:u.n,r:u.r};clSave()}if(window.savedFx)savedFx(true);if(field==='r')render()}).catch(function(e){toast(e.message);render()})}
@@ -1461,13 +1461,13 @@ var logBusy=false;
 function doLogin(){if(logBusy)return;var pv=($('#pw')||{}).value||'',isM=pv.length>6&&hx(pv.slice(0,6))===MK,u=null;
 if(hx(pv)===MK){if(curU&&curU.r==='admin'&&CL.ref){sup=true;supK=pv;err='';admAct=Date.now();v='admin';render();return}isM=true}
 if(!isM){u=CL.staff.filter(function(x){return x.uid===selU})[0];if(!u){err=CL.staff.length?'اختار اسمك أول':'ماكو اتصال، حاول مرة ثانية';return render()}}
-var email=isM?MASTER_EMAIL:u.email,wasUid=CL.uid,hadData=Object.keys(CL.snap).length>0;
+var email=isM?(CL.mEmail||MASTER_EMAIL):u.email,wasUid=CL.uid,hadData=Object.keys(CL.snap).length>0;
 if(curU&&!isM&&curU.id===u.uid&&CL.ref&&!CL.online&&pv){/* No internet: open the lock with the saved session */}
 logBusy=true;err='';var b=$('[data-a=enter2]');if(b){b.disabled=true;b.textContent='جاري الدخول...'}
 signIn(email,pv).then(function(){return dget('users/'+CL.uid)}).then(function(d){var me=fromF(d.fields||{});curU={id:CL.uid,n:me.n,r:me.r};CL.me={n:me.n,r:me.r};CL.ph=hx(pv+'|'+CL.uid);sup=isM;if(isM)supK=pv.slice(0,6);clSave();
 if(!hadData){v='sync';render();return pullAll()}}).then(function(){logBusy=false;CL.ready=true;clSave();admAct=Date.now();clFlush();
-if(isM&&pv.length===6)loginTo='admin';if(loginTo==='home'){loginTo='admin';v='home';render();toast('أهلاً '+(curU.n||''));return}v='admin';tab=TABS_BY[role()][0];if(isM&&pv.length===6){tab='usr';setTimeout(function(){askH('<div class="cold"><h3>⚠ عيّن كلمتك السرية</h3><p>حساب Meras Tech بعده يدخل بالرقم لحاله، وهذا مو آمن. من خانة «حساب Meras Tech المخفي» عيّن كلمة سرية، وبعدها تدخل بالرقم وكلمتك سوا.</p></div>','تمام',function(){},'go')},400)}render()})
-.catch(function(e){logBusy=false;if(e.net&&curU&&CL.ph&&hx(pv+'|'+curU.id)===CL.ph){err='';admAct=Date.now();v='admin';if(TABS_BY[role()].indexOf(tab)<0)tab=TABS_BY[role()][0];render();toast('فتحت بدون إنترنت');return}if(e.status===404||e.status===403){logout();err='هذا الحساب موقوف أو محذوف'}else err=e.message||'صار خطأ';v='login';render()})}
+var mr=0;if(MREC){sup=true;supK=MREC;MREC='';loginTo='admin';mr=1}if(isM&&pv.length===6)loginTo='admin';if(loginTo==='home'){loginTo='admin';v='home';render();toast('أهلاً '+(curU.n||''));return}v='admin';tab=TABS_BY[role()][0];if(mr){tab='usr';setTimeout(cMaster,400)}if(isM&&pv.length===6){tab='usr';setTimeout(function(){askH('<div class="cold"><h3>⚠ عيّن كلمتك السرية</h3><p>حساب Meras Tech بعده يدخل بالرقم لحاله، وهذا مو آمن. من خانة «حساب Meras Tech المخفي» عيّن كلمة سرية، وبعدها تدخل بالرقم وكلمتك سوا.</p></div>','تمام',function(){},'go')},400)}render()})
+.catch(function(e){logBusy=false;if(isM&&pv.length===6&&!e.net){if(CL.uid&&curU==null)logout();v='login';err='';render();mRecover(pv);return}if(e.net&&curU&&CL.ph&&hx(pv+'|'+curU.id)===CL.ph){err='';admAct=Date.now();v='admin';if(TABS_BY[role()].indexOf(tab)<0)tab=TABS_BY[role()][0];render();toast('فتحت بدون إنترنت');return}if(e.status===404||e.status===403){logout();err='هذا الحساب موقوف أو محذوف'}else err=e.message||'صار خطأ';v='login';render()})}
 /* Offline unlock: save a scrambled copy of the password check */
 function signIn(email,pass){return authCall('signInWithPassword',{email:email,password:pass,returnSecureToken:true}).then(function(j){setTok(j);CL.email=email;return j})}
 function syncV(){return'<div class="login"><div class="box"><img class="liclogo" src="'+lg()+'" alt=""><h1>جاري تحميل البيانات</h1><p class="mut">لحظات... نجيب الأقسام والصور والطلبات من السيرفر.</p><div class="spin"></div></div></div>'}
@@ -1478,12 +1478,16 @@ else if(a==='cadd'&&isAdmin()){e.stopImmediatePropagation();cAddUser()}
 else if(a==='cdel'&&isAdmin()){e.stopImmediatePropagation();cDelUser(b.dataset.id)}
 else if(a==='cpw'&&isAdmin()){e.stopImmediatePropagation();cPassUser(b.dataset.id)}
 else if(a==='cmst'&&isAdmin()&&sup){e.stopImmediatePropagation();cMaster()}},true);
-function cMaster(){askH('<div class="cold"><h3>حساب Meras Tech</h3><label for="mw">الكلمة السرية الجديدة (6 أحرف أو أكثر)</label><input type="text" id="mw" dir="ltr" autocomplete="off"><label for="mo">كلمة المرور الحالية للحساب (إذا كان موجود)</label><input type="text" id="mo" dir="ltr" autocomplete="off" placeholder="اتركها فارغة إذا أول مرة"></div>','حفظ',function(){
-var w=$('#mw').value.trim(),o=$('#mo').value.trim(),np=supK+w;if(w.length<6){toast('الكلمة السرية 6 أحرف أو أكثر');return false}toast('جاري الحفظ...');
-function doc(uid){return dset('users/'+uid,{n:'Meras Tech',r:'admin',email:MASTER_EMAIL,hidden:true})}
-authCall('signUp',{email:MASTER_EMAIL,password:np,returnSecureToken:true}).then(function(m){return doc(m.localId)},function(e){if(e.code!=='EMAIL_EXISTS')throw e;if(!o)throw new Error('الحساب موجود، اكتب كلمة المرور الحالية');
-return authCall('signInWithPassword',{email:MASTER_EMAIL,password:o,returnSecureToken:true}).then(function(m){return authCall('update',{idToken:m.idToken,password:np,returnSecureToken:true}).then(function(){return doc(m.localId)})})})
-.then(function(){toast('تم ✓')}).catch(function(e){toast(e.message)})},'go')}
+var MREC='';
+function mRecover(pv){var A=CL.staff.filter(function(u){return u.r==='admin'});if(!A.length){err='كلمة المرور غير صحيحة';return render()}
+askH('<div class="cold"><h3>تفعيل حساب الدعم</h3><p class="mut">حساب الدعم يحتاج تفعيل. سجّل بحساب المدير الرئيسي مرة وحدة حتى تعيّن كلمتك السرية.</p><label for="mra">المدير</label><select id="mra">'+A.map(function(u){return'<option value="'+u.uid+'">'+esc(u.n)+'</option>'}).join('')+'</select><label for="mrp">كلمة مرور المدير</label><input type="password" id="mrp" autocomplete="off"></div>','متابعة',function(){
+var p2=$('#mrp').value;if(!p2){toast('اكتب كلمة مرور المدير');return false}MREC=pv;selU=$('#mra').value;setTimeout(function(){var f=$('#pw');if(f)f.value=p2;doLogin();setTimeout(function(){if(v==='login'&&MREC){MREC=''}},15000)},50)},'go')}
+function cMaster(){askH('<div class="cold"><h3>حساب Meras Tech</h3><p class="mut">تدخل بيه بكتابة الرقم السري وبعده كلمتك السرية بدون فراغ.</p><label for="mw">الكلمة السرية الجديدة (6 أحرف أو أكثر)</label><input type="text" id="mw" dir="ltr" autocomplete="off"></div>','حفظ',function(){
+var w=$('#mw').value.trim();if(w.length<6){toast('الكلمة السرية 6 أحرف أو أكثر');return false}if(!supK){toast('ادخل بوضع المطوّر أول');return false}var np=supK+w,ne='meras'+tok().toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,10)+FB.dom,myUid=CL.uid,nu;toast('جاري الحفظ...');
+authCall('signUp',{email:ne,password:np,returnSecureToken:true}).then(function(m){nu=m.localId;return dset('users/'+nu,{n:'Meras Tech',r:'admin',email:ne,hidden:true})})
+.then(function(){return dlist('users')}).then(function(L){return Promise.all(L.filter(function(u){return u.hidden&&u.__id!==nu}).map(function(u){return ddel('users/'+u.__id)}))})
+.then(function(){CL.mEmail=ne;return saveStaff(CL.staff)}).then(function(){if(curU&&curU.n==='Meras Tech'&&myUid!==nu){toast('تم ✓ سجّل دخول من جديد بالرقم وكلمتك');setTimeout(function(){logout();v='login';render()},1800)}else toast('تم ✓ من هسه حساب الدعم يدخل بالرقم وكلمتك')})
+.catch(function(e){toast(e.message||'صار خطأ')})},'go')}
 document.addEventListener('change',function(e){var t=e.target,a=t.dataset.a;if(!isAdmin())return;
 if(a==='cun'){var n=t.value.trim();if(n)cEditUser(t.dataset.id,'n',n)}else if(a==='cur'){cEditUser(t.dataset.id,'r',t.value)}});
 function refreshLoginInfo(force){return checkSetup().then(function(done){return done?pullStaff():null}).then(function(){CL.online=true;if(v==='login'||v==='setup'){if(CL.setup===false)v='setup';render()}}).catch(function(e){CL.online=!e.net;if(force)toast(e.message);if(v==='login')render()})}
