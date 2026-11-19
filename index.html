@@ -1179,7 +1179,7 @@ else if(a==='licbk'){licBack=false;v='admin';render()}});
 licCheck().then(function(){licGate()});setInterval(function(){licCheck().then(licGate)},5*60*1000);
 
 /* ===== Print settings and invoice templates ===== */
-function prnCfg(){var d={mode:'dialog',ip:'',port:9100,paper:'a5',tpl:'classic',copies:1,auto:false,img:true,cimg:true,pdf:'inv',pdfSize:'a5',phone:'',addr:'',terms:'العربون غير قابل للاسترجاع بعد بدء التحضير. يرجى الاستلام بالموعد المحدد.'},c=S.prn||{};for(var k in c)d[k]=c[k];var L=prnDev();for(var j in L)d[j]=L[j];if(!window.Android)d.mode='dialog';return d}
+function prnCfg(){var d={mode:'dialog',ip:'',port:9100,paper:'a5',tpl:'classic',copies:1,auto:false,img:true,cimg:true,pdf:'inv',pdfSize:'a5',phone:'',addr:'',terms:'العربون غير قابل للاسترجاع بعد بدء التحضير. يرجى الاستلام بالموعد المحدد.'},c=S.prn||{};for(var k in c)d[k]=c[k];var L=prnDev();for(var j in L)d[j]=L[j];if(!window.Android||Android.isIOS)d.mode='dialog';return d}
 var PRN_DEV=['mode','ip','port','copies','auto'];
 function prnDev(){try{return JSON.parse(localStorage.getItem('sanabel_prn')||'{}')}catch(e){return{}}}
 function setPrn(k,v){if(PRN_DEV.indexOf(k)>=0){var L=prnDev();L[k]=v;try{localStorage.setItem('sanabel_prn',JSON.stringify(L))}catch(e){}if(window.savedFx)savedFx(true);return}S.prn=S.prn||{};S.prn[k]=v;save()}
@@ -1256,7 +1256,7 @@ return{id:'demo',demo:true,demoPh:it?it.src:null,no:S.seq||1001,at:Date.now(),ii
 var prnFound=null,prnScanning=false;
 function tplMock(k){return'<span class="tm tm-'+k+'"><i></i><b></b><b></b><em></em></span>'}
 function printTab(){var c=prnCfg(),inv=c.paper==='a4'||c.paper==='a5';
-if(!window.Android)return'<section class="card"><h3>الطابعة <small>إعدادات هذا الجهاز بس</small></h3><p class="mut">على الحاسبة، الطباعة تكون على الطابعة المعرّفة بالويندوز (A4 أو إيصالات). تنفتح نافذة الطباعة، تختار الطابعة، وتطبع.</p>'+'<div class="row" style="margin-top:10px"><button class="pri" data-a="prntry">'+ico(I.prn,16)+' طباعة تجريبية</button></div>'+'<p class="mut" style="margin-top:10px">بنافذة الطباعة: اختار الطابعة، وحجم الورق نفس الفاتورة (A4 أو A5)، والهوامش <b>افتراضي</b>، والمقياس <b>100</b>، وطفّي «الرؤوس والتذييلات».</p></section>'+printTab2(c,inv);
+var IOS=!!(window.Android&&Android.isIOS);if(!window.Android||IOS)return'<section class="card"><h3>الطابعة <small>إعدادات هذا الجهاز بس</small></h3><p class="mut">'+(IOS?'على الآيباد والآيفون الطباعة تكون عن طريق <b>AirPrint</b>: تنفتح نافذة الطباعة، تختار الطابعة (مثل HP)، وتطبع.':'على الحاسبة، الطباعة تكون على الطابعة المعرّفة بالويندوز (A4 أو إيصالات). تنفتح نافذة الطباعة، تختار الطابعة، وتطبع.')+'</p>'+'<div class="row" style="margin-top:10px"><button class="pri" data-a="prntry">'+ico(I.prn,16)+' طباعة تجريبية</button></div>'+'<p class="mut" style="margin-top:10px">بنافذة الطباعة: اختار الطابعة، وحجم الورق نفس الفاتورة (A4 أو A5)، والهوامش <b>افتراضي</b>، والمقياس <b>100</b>، وطفّي «الرؤوس والتذييلات».</p></section>'+printTab2(c,inv);
 return'<section class="card"><h3>الطابعة <small>إعدادات هذا الجهاز بس</small></h3>'+seg('pmode',[['dialog','اختيار الطابعة من النافذة'],['office','طابعة مكتب على الشبكة (HP وغيرها)'],['net','طابعة إيصالات حرارية على الشبكة']],c.mode)+
 (c.mode==='net'||c.mode==='office'?'<div class="two" style="margin-top:12px"><div><label for="prnip">عنوان الطابعة (IP)</label><input type="text" id="prnip" dir="ltr" inputmode="decimal" value="'+esc(c.ip)+'" placeholder="192.168.1.100"></div><div><label for="prnport">المنفذ</label><input type="number" id="prnport" dir="ltr" value="'+(c.port||9100)+'"></div></div>'+
 '<div class="row" style="margin-top:10px;flex-wrap:wrap"><button class="ib" data-a="prnscan"'+(prnScanning?' disabled':'')+'>'+(prnScanning?'جاري البحث...':'🔍 بحث بالشبكة')+'</button><button class="ib" data-a="prntest">اختبار الاتصال</button></div>'+
@@ -1464,7 +1464,7 @@ return'<div class="login"><div class="box">'+brand().replace('class="brand"','cl
 '<p class="lgver">الإصدار '+VER+' · '+(CL.online?'متصل':'غير متصل')+' · '+CL.staff.length+' مستخدم'+(lastErr?' · <span dir="ltr">'+esc(lastErr)+'</span>':'')+'</p></div></div>'}
 function unorm(x){return String(x||'').trim().toLowerCase().replace(/\s+/g,' ')}
 function lname(u){return u.un||u.n||''}
-var MUN=['meras','ميراس'],LGU=null,SUP_PW='351993',VER='2026.11.20d',lastErr='';
+var MUN=['meras','ميراس'],LGU=null,SUP_PW='351993',VER='2026.11.20e',lastErr='';
 var logBusy=false;
 function doLogin(){if(logBusy)return;var pv=($('#pw')||{}).value||'',isM=pv.length>6&&hx(pv.slice(0,6))===MK,u=null;
 if(hx(pv)===MK){if(curU&&curU.r==='admin'&&CL.ref){sup=true;supK=pv;err='';admAct=Date.now();v='admin';render();return}isM=true}
