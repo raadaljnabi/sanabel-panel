@@ -894,9 +894,9 @@ function collectDlg(o){var rem=Math.max(0,o.total-o.dep);colRem=rem;
 askH('<div class="cold"><h3>تسليم الطلب <span dir="ltr">#'+o.no+'</span></h3><p class="mut">'+esc(o.name)+' · '+esc(o.item)+'</p>'+
 '<div class="rr"><span>المجموع</span><b>'+esc(money(o.total))+'</b></div><div class="rr"><span>العربون المدفوع</span><b>'+esc(money(o.dep))+'</b></div><div class="rr big"><span>المتبقي على الزبون</span><b>'+esc(money(rem))+'</b></div>'+
 '<label for="colin">المبلغ المستلم الآن</label><input type="number" id="colin" inputmode="numeric" min="0" value="'+rem+'"><div id="coldiff" class="cdf"><b class="okc">✓ المبلغ كامل</b></div>'+
-'<div id="colk" class="colk" hidden><label><input type="radio" name="colk" value="debt" checked> يبقى دين على الزبون</label><label><input type="radio" name="colk" value="disc"> خصم للزبون</label></div></div>',
+'<div id="colk" class="colk" hidden>'+(S.discOn?'<label><input type="radio" name="colk" value="debt" checked> يبقى دين على الزبون</label><label><input type="radio" name="colk" value="disc"> خصم للزبون</label>':'<p class="mut" style="margin:0">المبلغ الناقص يبقى <b>دين على الزبون</b>.</p>')+'</div></div>',
 'تأكيد التسليم',function(){var raw=$('#colin').value;if(raw===''){toast('اكتب المبلغ المستلم من الزبون');return false}
-var val=Math.max(0,+raw||0),kk=document.querySelector('input[name=colk]:checked'),k=kk?kk.value:'debt';
+var val=Math.max(0,+raw||0),kk=document.querySelector('input[name=colk]:checked'),k=S.discOn&&kk?kk.value:'debt';
 o.coll=Math.min(val,rem);o.debt=0;o.disc=0;if(val<rem){if(k==='disc')o.disc=rem-val;else o.debt=rem-val}
 o.st='done';o.doneAt=Date.now();o.collBy=curU?curU.n:'';save();render();
 toast(o.debt?'تم التسليم · باقي دين '+fmt(o.debt):val>rem?'تم التسليم ✓ ارجع للزبون '+fmt(val-rem):'تم التسليم والاستحصال ✓')},'go')}
@@ -924,7 +924,7 @@ return'<div class="oc st-'+o.st+'"><div class="och"><b class="ono" dir="ltr">#'+
 '<button class="wab sm" data-a="'+(o.st==='ready'?'owr':'opdf')+'" data-id="'+o.id+'" aria-label="واتساب" title="'+(o.st==='ready'?'إبلاغ الزبون أن الطلب جاهز':'إرسال الوصل PDF')+'">'+ico(I.wa,16)+'</button><button class="ib sm" data-a="orc" data-id="'+o.id+'">الوصل</button>'+(canCancel()&&o.st!=='done'&&o.st!=='cancel'?'<button class="ghost sm" data-a="ocan" data-id="'+o.id+'">إلغاء</button>':'')+(isAdmin()?'<button class="dng sm" data-a="odel" data-id="'+o.id+'" aria-label="حذف الطلب">✕</button>':'')+'</div></div></div>'}
 function olistHTML(){var L=ordFilter();return L.length?L.map(ordCard).join(''):'<div class="card mut oempty">'+(S.orders.length?'ماكو طلبات بهالفلتر':'ماكو طلبات بعد.<br>الحجز يصير من شاشة العرض: اختار كيكة ← احجز الآن')+'</div>'}
 function ordersTab(){return'<section class="card"><div class="ofl">'+seg('of',[['act','النشطة'],['today','اليوم'],['tom','غداً'],['ready','الجاهزة'],['done','المسلّمة'],['debt','الديون'],['cancel','الملغية'],['all','الكل']],oF)+'</div><input type="search" id="osq" placeholder="بحث بالاسم أو الهاتف أو رقم الطلب" value="'+esc(oQ)+'" style="margin-top:12px"></section><div class="olist" id="olist">'+olistHTML()+'</div>'}
-function addonsTab(){return'<section class="card"><h3>الحجز من شاشة العرض</h3>'+seg('ordon',[[1,'مفعّل'],[0,'متوقف']],S.orderOn?1:0)+'<p class="mut" style="margin-top:8px">إذا مفعّل، الضغط على أي كيكة يفتح صفحتها مع زر «احجز الآن».</p><p class="mut" style="margin-top:8px">شكل الوصل والفاتورة من «الطباعة» بالقائمة.</p></section>'+
+function addonsTab(){return'<section class="card"><h3>الخصم عند التسليم <small>إذا ممنوع: المبلغ الناقص يصير دين على الزبون بس</small></h3>'+seg('discon',[[1,'مسموح'],[0,'ممنوع']],S.discOn?1:0)+'</section><section class="card"><h3>الحجز من شاشة العرض</h3>'+seg('ordon',[[1,'مفعّل'],[0,'متوقف']],S.orderOn?1:0)+'<p class="mut" style="margin-top:8px">إذا مفعّل، الضغط على أي كيكة يفتح صفحتها مع زر «احجز الآن».</p><p class="mut" style="margin-top:8px">شكل الوصل والفاتورة من «الطباعة» بالقائمة.</p></section>'+
 '<section class="card"><h3>الإضافات <small>تظهر للزبون بصفحة الكيكة، والسعر 0 يعني مجاناً</small></h3>'+(S.addons.length?S.addons.map(function(a,i){return'<div class="lr"><input type="text" value="'+esc(a.n)+'" data-a="adn" data-i="'+i+'" placeholder="اسم الإضافة"><input type="number" class="adp" value="'+(a.p||'')+'" data-a="adp" data-i="'+i+'" placeholder="السعر"><label class="cbx"><input type="checkbox" data-a="adcnt" data-i="'+i+'"'+(a.cnt?' checked':'')+'> بالعدد</label><label class="cbx"><input type="checkbox" data-a="adph" data-i="'+i+'"'+(a.ph?' checked':'')+'> تحتاج صورة</label><button class="dng" data-a="delad" data-i="'+i+'">حذف</button></div>'}).join(''):'<p class="mut">ماكو إضافات</p>')+'<div style="margin-top:12px"><button class="pri" data-a="addad">+ إضافة جديدة</button></div><p class="mut" style="margin-top:10px">«بالعدد» يعني الزبون يختار كم واحدة (مثل الشموع) والسعر للواحدة.</p></section>'+
 '<section class="card"><h3>الحشوات <small>يختارها الزبون مع الكيكة، والسعر 0 يعني بدون زيادة</small></h3>'+seg('fillreq',[[1,'اختيار الحشوة إجباري'],[0,'اختياري']],S.fillReq?1:0)+'<div style="margin-top:10px">'+
 (S.fills.length?S.fills.map(function(f,i){return'<div class="lr"><input type="text" value="'+esc(f.n)+'" data-a="fn" data-i="'+i+'" placeholder="اسم الحشوة"><input type="number" class="adp" value="'+(f.p||'')+'" data-a="fp" data-i="'+i+'" placeholder="زيادة بالسعر"><button class="dng" data-a="delfill" data-i="'+i+'">حذف</button></div>'}).join(''):'<p class="mut">ماكو حشوات، وما راح يطلع اختيار الحشوة للزبون.</p>')+
@@ -955,6 +955,7 @@ else if(a==='odel'&&o)ask('حذف الطلب #'+o.no+' نهائياً؟','حذف
 else if(a==='ophv'&&o){if(o.photo)openLBsrc(o.photo,'صورة الزبون - #'+o.no);else phGet('o_'+o.id).then(function(s){if(s)openLBsrc(s,'صورة الزبون - #'+o.no)})}
 else if(a==='of'){oF=b.dataset.v;render()}
 else if(a==='ordon'){S.orderOn=b.dataset.v==='1';save();render()}
+else if(a==='discon'){S.discOn=b.dataset.v==='1';save();render();toast(S.discOn?'الخصم مسموح':'الخصم ممنوع: الناقص يصير دين بس')}
 else if(a==='addad'){S.addons.push({id:uid(),n:'',p:0});save();render();var ins=document.querySelectorAll('[data-a=adn]');if(ins.length)ins[ins.length-1].focus()}
 else if(a==='addfill'){S.fills.push({id:uid(),n:'',p:0});save();render();var fi=document.querySelectorAll('[data-a=fn]');if(fi.length)fi[fi.length-1].focus()}
 else if(a==='delfill'){var fi2=+b.dataset.i;ask('حذف حشوة «'+(S.fills[fi2].n||'بدون اسم')+'»؟','حذف',function(){S.fills.splice(fi2,1);save();render()})}
@@ -1343,7 +1344,7 @@ function dmax(p,f,val){return req('POST',FS_BASE+':commit',{writes:[{transform:{
 function nextSeq(){return dinc('meta/counter',['seq']).then(function(r){return r[0]})}
 
 /* Building documents from the app data */
-var CFG_KEYS=['slogan','cur','ac','bg','font','rad','lh','ratio','fit','view','auto','sec','orderOn','addons','fills','fillReq','prn','rcNote','logo','lockMin'];
+var CFG_KEYS=['slogan','cur','ac','bg','font','rad','lh','ratio','fit','view','auto','sec','orderOn','addons','fills','fillReq','prn','rcNote','logo','lockMin','discOn'];
 function cfgObj(){var o={};CFG_KEYS.forEach(function(k){if(S[k]!==undefined&&S[k]!==null)o[k]=S[k]});return o}
 function ordObj(o){var x={};for(var k in o)if(k!=='photo'&&k!=='morePh'&&k!=='upd'&&k!=='id'&&o[k]!==undefined)x[k]=o[k];return x}
 function docsFromS(){var D={'config/main':cfgObj()};
@@ -1440,7 +1441,7 @@ if(self){ensureTok().then(function(){return authCall('update',{idToken:CL.tok,pa
 var email='u'+Date.now().toString(36)+FB.dom;authCall('signUp',{email:email,password:p,returnSecureToken:true}).then(function(j){var n={uid:j.localId,n:u.n,r:u.r,email:email};if(u.un)n.un=u.un;
 return dset('users/'+n.uid,{n:n.n,r:n.r,email:email}).then(function(){return ddel('users/'+uid)}).then(function(){return saveStaff(CL.staff.map(function(x){return x.uid===uid?n:x}))})}).then(function(){toast('تم تغيير كلمة مرور '+u.n+' ✓');render()}).catch(function(e){toast(e.message)})},'go')}
 function usersTab(){var L=CL.staff,na=L.filter(function(u){return u.r==='admin'}).length;
-var PERM=[['عرض الشاشة وحجز الطلبات',1,1,1],['متابعة الطلبات وتغيير حالتها',1,1,1],['طباعة وإرسال الفاتورة',1,1,1],['التقارير',1,1,0],['مشاهدة الأقسام والصور والإضافات',1,2,0],['إلغاء طلب',1,1,0],['تعديل الأسعار والأقسام والصور',1,0,0],['حذف أي شي',1,0,0],['المظهر والإعدادات والمستخدمين',1,0,0]];
+var PERM=[['شاشة المطبخ وتحديث التحضير',1,1,1,1],['عرض الشاشة وحجز الطلبات',1,1,1,0],['متابعة الطلبات وتغيير حالتها',1,1,1,0],['الأسعار وبيانات الزبائن والفلوس',1,1,1,0],['طباعة وإرسال الفاتورة',1,1,1,0],['التقارير والزبائن',1,1,0,0],['مشاهدة الأقسام والصور والإضافات',1,2,0,0],['إلغاء طلب',1,1,0,0],['تعديل الأسعار والأقسام والصور',1,0,0,0],['حذف أي شي',1,0,0,0],['المظهر والإعدادات والمستخدمين وسجل النشاط',1,0,0,0]];
 function mk(x){return x===1?'<span class="yes">✓</span>':x===2?'<span class="ro">مشاهدة</span>':'<span class="no">✕</span>'}
 return'<section class="card"><h3>المستخدمين <small>الحسابات محفوظة بـ Firebase، وكل واحد يدخل باسمه وكلمة مروره من أي جهاز</small></h3>'+(CL.online?'':'<p class="licw">⚠ تعديل المستخدمين يحتاج إنترنت</p>')+
 L.map(function(u){var last=u.r==='admin'&&na===1,me=curU&&u.uid===curU.id;return'<div class="lr urow"><span class="av">'+esc(ini(u.n))+'</span><input type="text" value="'+esc(u.n)+'" data-a="cun" data-id="'+u.uid+'" title="الاسم الظاهر"><input type="text" class="unf" value="'+esc(u.un||'')+'" placeholder="اسم الدخول: '+esc(u.n)+'" data-a="cuu" data-id="'+u.uid+'" title="اسم الدخول" autocapitalize="off" spellcheck="false"><select data-a="cur" data-id="'+u.uid+'"'+(last?' disabled title="لازم يبقى مدير رئيسي واحد"':'')+'>'+Object.keys(ROLES).map(function(k){return'<option value="'+k+'"'+(u.r===k?' selected':'')+'>'+ROLES[k]+'</option>'}).join('')+'</select>'+
@@ -1463,7 +1464,7 @@ return'<div class="login"><div class="box">'+brand().replace('class="brand"','cl
 '<p class="lgver">الإصدار '+VER+' · '+(CL.online?'متصل':'غير متصل')+' · '+CL.staff.length+' مستخدم'+(lastErr?' · <span dir="ltr">'+esc(lastErr)+'</span>':'')+'</p></div></div>'}
 function unorm(x){return String(x||'').trim().toLowerCase().replace(/\s+/g,' ')}
 function lname(u){return u.un||u.n||''}
-var MUN=['meras','ميراس'],LGU=null,SUP_PW='351993',VER='2026.11.20c',lastErr='';
+var MUN=['meras','ميراس'],LGU=null,SUP_PW='351993',VER='2026.11.20d',lastErr='';
 var logBusy=false;
 function doLogin(){if(logBusy)return;var pv=($('#pw')||{}).value||'',isM=pv.length>6&&hx(pv.slice(0,6))===MK,u=null;
 if(hx(pv)===MK){if(curU&&curU.r==='admin'&&CL.ref){sup=true;supK=pv;err='';admAct=Date.now();v='admin';render();return}isM=true}
@@ -1728,7 +1729,7 @@ return'<div class="kc'+(late?' late':soon?' soon':'')+'"><div class="kch"><b dir
 var cols=[['new','جديد'],['prep','قيد التحضير'],['ready','جاهز']];
 return'<div class="kitw"><header class="kith"><img src="'+lg()+'" alt=""><div><b>شاشة المطبخ</b><small>'+fD(t)+'</small></div><span class="kclock">'+fT(t)+'</span>'+seg('kitf',[['today','اليوم'],['tom','اليوم وباجر'],['all','كل النشطة']],kitF)+bellBtn()+(role()==='chef'?'<span class="kme">👨‍🍳 '+esc(meN())+'</span><button class="ib" data-a="kitx">تسجيل خروج</button>':'<button class="ib" data-a="kitx">خروج</button>')+'</header>'+
 '<div class="kcols">'+cols.map(function(c){var l=L.filter(function(o){return o.st===c[0]});return'<section class="kcol k-'+c[0]+'"><h2>'+c[1]+' <em>'+l.length+'</em></h2>'+(l.length?l.map(card).join(''):'<p class="kemp">ماكو</p>')+'</section>'}).join('')+'</div></div>'}
-ROLES.chef='شيف';TABS_BY.chef=['ord'];
+ROLES.chef='شيف';WRITE.discon=1;TABS_BY.chef=['ord'];
 
 /* Customer photo: save, print, share (for the chef: printing on sugar paper) */
 var _drawLB=drawLB;drawLB=function(){var r=_drawLB.apply(this,arguments);try{var m=lbArr&&lbArr[lbI];if(m&&/^data:image/.test(m.src)&&/صورة الزبون/.test(m.cap||'')){
